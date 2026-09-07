@@ -55,6 +55,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 interface ManagedCommunity {
   id: string;
@@ -500,24 +501,68 @@ export default function DashboardLayout({
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {isLoadingUser ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <div className="flex items-center gap-2">
-                  <span className="hidden text-xs font-medium text-muted-foreground sm:inline-block">
-                    {user?.name || user?.username}
-                  </span>
-                  <Avatar size="sm">
-                    {user?.profile_picture_url && (
-                      <AvatarImage
-                        src={user.profile_picture_url}
-                        alt={user.name || user.username}
-                      />
-                    )}
-                    <AvatarFallback>{userInitials}</AvatarFallback>
-                  </Avatar>
-                </div>
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 rounded-full p-1 outline-none hover:bg-muted/80 transition-colors cursor-pointer"
+                        />
+                      }
+                    >
+                      <span className="hidden text-xs font-medium text-muted-foreground sm:inline-block">
+                        {user?.name || user?.username}
+                      </span>
+                      <Avatar size="sm">
+                        {user?.profile_picture_url && (
+                          <AvatarImage
+                            src={user.profile_picture_url}
+                            alt={user.name || user.username}
+                          />
+                        )}
+                        <AvatarFallback>{userInitials}</AvatarFallback>
+                      </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" side="bottom" className="w-56">
+                      <DropdownMenuLabel>
+                        <div className="flex flex-col gap-0.5">
+                          <p className="text-sm font-semibold text-foreground">
+                            {user?.name || user?.username || "Admin User"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {user?.email || `@${user?.username || "user"}`}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={handleLogout}
+                        className="cursor-pointer"
+                      >
+                        <LogOut className="mr-2 size-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Separator orientation="vertical" className="h-4 hidden sm:block" />
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs gap-1.5 h-8 px-2"
+                  >
+                    <LogOut className="size-3.5" />
+                    <span className="hidden sm:inline">Log out</span>
+                  </Button>
+                </>
               )}
             </div>
           </header>

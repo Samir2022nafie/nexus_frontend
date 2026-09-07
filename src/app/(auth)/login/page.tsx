@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,25 +109,32 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-4 sm:p-8">
-      <Card className="w-full max-w-md shadow-lg border-border/80">
-        <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background p-4 sm:p-8">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
+        <div className="h-[500px] w-[500px] rounded-full bg-primary/5 blur-[120px]" />
+      </div>
+
+      <Card className="w-full max-w-md border-border/70 bg-card/95 shadow-2xl shadow-foreground/5 backdrop-blur-sm sm:rounded-2xl">
+        <CardHeader className="space-y-3 pb-6 text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10">
             <Compass className="size-6" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            HobbyHub Admin
-          </CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            Sign in to access your community management dashboard.
-          </CardDescription>
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+              HobbyHub Admin
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Sign in to manage your communities, events, and moderation.
+            </CardDescription>
+          </div>
         </CardHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             {/* Identifier Field (Email or Phone) */}
-            <div className="space-y-2">
-              <Label htmlFor="identifier" className="text-sm font-medium">
+            <div className="space-y-1.5">
+              <Label htmlFor="identifier" className="text-sm font-medium text-foreground">
                 Email or Phone Number
               </Label>
               <div className="relative">
@@ -136,7 +144,7 @@ export default function LoginPage() {
                   placeholder="name@example.com or +2519..."
                   autoComplete="username"
                   disabled={isLoading}
-                  className="pr-10"
+                  className="h-10 pr-10 rounded-lg border-border/80 focus-visible:ring-2 focus-visible:ring-primary/30"
                   {...register("identifier")}
                 />
                 <UserCheck className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -149,9 +157,9 @@ export default function LoginPage() {
             </div>
 
             {/* Password Field */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
               </div>
@@ -162,7 +170,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   autoComplete="current-password"
                   disabled={isLoading}
-                  className="pr-10"
+                  className="h-10 pr-10 rounded-lg border-border/80 focus-visible:ring-2 focus-visible:ring-primary/30"
                   {...register("password")}
                 />
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -175,10 +183,10 @@ export default function LoginPage() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-3 pt-2">
+          <CardFooter className="flex flex-col gap-3.5 pt-4">
             <Button
               type="submit"
-              className="w-full font-medium"
+              className="h-10 w-full rounded-lg font-medium shadow-md shadow-primary/15 transition-all hover:shadow-lg hover:shadow-primary/25 cursor-pointer"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -190,7 +198,16 @@ export default function LoginPage() {
                 "Sign In"
               )}
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
+            <div className="text-center text-xs text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-primary hover:underline underline-offset-4"
+              >
+                Register
+              </Link>
+            </div>
+            <p className="text-center text-[11px] text-muted-foreground/80">
               Authorized community owners, admins, and moderators only.
             </p>
           </CardFooter>
