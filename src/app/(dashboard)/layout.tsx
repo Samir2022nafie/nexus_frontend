@@ -87,17 +87,20 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [tokenChecked, setTokenChecked] = React.useState(false);
+  const isClient = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const token = isClient ? (typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null) : null;
+  const tokenChecked = Boolean(isClient && token);
 
   // Check auth token existence on client mount
   React.useEffect(() => {
-    const token = localStorage.getItem("bearer_token");
-    if (!token) {
+    if (isClient && !token) {
       router.replace("/login");
-    } else {
-      setTokenChecked(true);
     }
-  }, [router]);
+  }, [isClient, token, router]);
 
   // Fetch current user
   const { data: user, isLoading: isLoadingUser } = useQuery<UserProfile>({
