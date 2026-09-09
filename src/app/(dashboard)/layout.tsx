@@ -14,10 +14,15 @@ import {
   LogOut,
   Compass,
   Building2,
+  Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiGet, apiPost } from "@/lib/api-client";
+import {
+  NotificationsDropdown,
+  NotificationsResponse,
+} from "@/components/notifications-dropdown";
 import {
   Sidebar,
   SidebarContent,
@@ -118,6 +123,35 @@ export default function DashboardLayout({
     enabled: tokenChecked,
   });
 
+  // Fetch unread notifications for sidebar badge (shares query cache with header dropdown)
+  const { data: unreadNotificationsData } = useQuery<NotificationsResponse>({
+    queryKey: ["notifications", "header"],
+    queryFn: () =>
+      apiGet<NotificationsResponse>(
+        "/notifications?unreadOnly=true&limit=5&sort=created_at&order=desc"
+      ),
+    enabled: tokenChecked,
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
+
+  const totalUnreadNotifications = React.useMemo(() => {
+    if (
+      unreadNotificationsData &&
+      !Array.isArray(unreadNotificationsData) &&
+      typeof unreadNotificationsData.meta?.total === "number"
+    ) {
+      return unreadNotificationsData.meta.total;
+    }
+    if (Array.isArray(unreadNotificationsData)) {
+      return unreadNotificationsData.filter((n) => !(n.isRead || n.is_read)).length;
+    }
+    return (
+      unreadNotificationsData?.data?.filter((n) => !(n.isRead || n.is_read))
+        .length || 0
+    );
+  }, [unreadNotificationsData]);
+
   // Extract community context slug if path is /communities/[slug]/*
   const communityMatch = pathname.match(/^\/communities\/([^/]+)/);
   const currentSlug = communityMatch ? communityMatch[1] : null;
@@ -168,6 +202,11 @@ export default function DashboardLayout({
     const crumbs: Array<{ label: string; href?: string; isCurrent?: boolean }> = [
       { label: "Dashboard", href: "/" },
     ];
+
+    if (pathname.startsWith("/notifications")) {
+      crumbs.push({ label: "Notifications", isCurrent: true });
+      return crumbs;
+    }
 
     if (currentSlug) {
       const communityName = currentCommunity?.name || currentSlug;
@@ -254,6 +293,27 @@ export default function DashboardLayout({
                     >
                       <LayoutDashboard className="size-4" />
                       <span>Dashboard Home</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      render={<Link href="/notifications" />}
+                      isActive={pathname.startsWith("/notifications")}
+                      tooltip="Notifications"
+                    >
+                      <Bell className="size-4" />
+                      <span className="flex-1">Notifications</span>
+                      {totalUnreadNotifications > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-auto text-[10px] px-1.5 py-0 font-mono shrink-0"
+                        >
+                          {totalUnreadNotifications > 99
+                            ? "99+"
+                            : totalUnreadNotifications}
+                        </Badge>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
@@ -480,31 +540,58 @@ export default function DashboardLayout({
         <SidebarInset className="flex min-h-screen flex-1 flex-col bg-background">
           {/* Top Header */}
           <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((crumb, index) => (
-                    <React.Fragment key={crumb.label + index}>
-                      {index > 0 && <BreadcrumbSeparator />}
-                      <BreadcrumbItem>
-                        {crumb.isCurrent || !crumb.href ? (
-                          <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                        ) : (
-                          <BreadcrumbLink render={<Link href={crumb.href} />}>
-                            {crumb.label}
-                          </BreadcrumbLink>
+            <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+              <SidebarTrigger className="-ml-1 shrink-0" />
+              <Separator orientation="vertical" className="mr-2 h-4 shrink-0" />
+              <Breadcrumb className="overflow-hidden">
+                <BreadcrumbList className="flex-nowrap">
+                  {breadcrumbs.map((crumb, index) => {
+                    const isLast = index === breadcrumbs.length - 1;
+                    return (
+                      <React.Fragment key={crumb.label + index}>
+                        {index > 0 && (
+                          <BreadcrumbSeparator
+                            className={`shrink-0 ${
+                              !isLast && index > 0 && breadcrumbs.length > 2
+                                ? "hidden sm:inline-flex"
+                                : ""
+                            }`}
+                          />
                         )}
-                      </BreadcrumbItem>
-                    </React.Fragment>
-                  ))}
+                        <BreadcrumbItem
+                          className={`truncate ${
+                            !isLast && index > 0 && breadcrumbs.length > 2
+                              ? "hidden sm:inline-flex"
+                              : ""
+                          }`}
+                        >
+                          {crumb.isCurrent || !crumb.href ? (
+                            <BreadcrumbPage className="truncate max-w-[130px] sm:max-w-[200px] md:max-w-none">
+                              {crumb.label}
+                            </BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink
+                              render={<Link href={crumb.href} />}
+                              className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-none"
+                            >
+                              {crumb.label}
+                            </BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                      </React.Fragment>
+                    );
+                  })}
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Notifications Dropdown */}
+              <NotificationsDropdown />
+
+              <Separator orientation="vertical" className="h-4" />
+
               {isLoadingUser ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
@@ -571,7 +658,7 @@ export default function DashboardLayout({
           </header>
 
           {/* Page Content */}
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

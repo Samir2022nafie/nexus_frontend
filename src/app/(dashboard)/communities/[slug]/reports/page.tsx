@@ -38,6 +38,14 @@ import { toast } from "sonner";
 
 import { apiGet, apiPatch, apiPost, ApiMeta } from "@/lib/api-client";
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
   Table,
   TableHeader,
   TableBody,
@@ -808,21 +816,29 @@ export default function ReportsPage() {
   const communityName = overviewData?.community?.name || slug;
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto">
+    <div className="flex-1 space-y-6 max-w-7xl mx-auto w-full">
+      {/* In-Page Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/" />}>Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href={`/communities/${slug}`} />}>
+              {communityName}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Reports</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header & Navigation */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link
-              href={`/communities/${slug}`}
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>{communityName}</span>
-            </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium">Reports & Moderation</span>
-          </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2.5">
             <ShieldAlert className="h-7 w-7 text-amber-500" />
             <span>Community Moderation</span>

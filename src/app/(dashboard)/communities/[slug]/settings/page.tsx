@@ -37,6 +37,14 @@ import { toast } from "sonner";
 
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client";
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
   Card,
   CardHeader,
   CardTitle,
@@ -472,21 +480,29 @@ export default function CommunitySettingsPage() {
 
   return (
     <TooltipProvider delay={150}>
-      <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 md:p-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        {/* In-Page Breadcrumb */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link href="/" />}>Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link href={`/communities/${slug}`} />}>
+                {community.name}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Settings</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Top Header Navigation */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Link
-                href={`/communities/${slug}`}
-                className="hover:text-foreground inline-flex items-center gap-1 transition-colors"
-              >
-                <ArrowLeft className="size-3" />
-                {community.name}
-              </Link>
-              <span>/</span>
-              <span className="font-medium text-foreground">Settings</span>
-            </div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 Community Settings
