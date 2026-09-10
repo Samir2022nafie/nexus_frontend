@@ -293,23 +293,28 @@ export default function DashboardLayout({
       <div className="flex min-h-screen w-full bg-muted/20">
         <Sidebar collapsible="icon" className="border-r border-border">
           {/* Sidebar Header */}
-          <SidebarHeader className="border-b border-border px-4 py-3">
-            <Link
-              href="/"
-              className="flex items-center gap-2.5 font-semibold transition-opacity hover:opacity-85"
-            >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <Compass className="size-4" />
-              </div>
-              <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-                <span className="truncate text-sm font-semibold tracking-tight text-foreground">
-                  HobbyHub
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  Admin Dashboard
-                </span>
-              </div>
-            </Link>
+          <SidebarHeader className="border-b border-border h-14 justify-center p-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  size="lg"
+                  render={<Link href="/" />}
+                  className="hover:bg-transparent active:bg-transparent"
+                >
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                    <Compass className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold tracking-tight text-foreground">
+                      HobbyHub
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      Admin Dashboard
+                    </span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </SidebarHeader>
 
           {/* Sidebar Content */}
@@ -352,7 +357,7 @@ export default function DashboardLayout({
                       {totalUnreadNotifications > 0 && (
                         <Badge
                           variant="secondary"
-                          className="ml-auto text-[10px] px-1.5 py-0 font-mono shrink-0"
+                          className="ml-auto text-[10px] px-1.5 py-0 font-mono shrink-0 group-data-[collapsible=icon]:hidden"
                         >
                           {totalUnreadNotifications > 99
                             ? "99+"
@@ -393,15 +398,12 @@ export default function DashboardLayout({
                             }
                             isActive={isActive}
                             tooltip={community.name}
-                            className="justify-between"
                           >
-                            <div className="flex items-center gap-2 truncate">
-                              <Building2 className="size-4 shrink-0 text-muted-foreground" />
-                              <span className="truncate">{community.name}</span>
-                            </div>
+                            <Building2 className="size-4 shrink-0 text-muted-foreground" />
+                            <span className="truncate flex-1">{community.name}</span>
                             <Badge
                               variant="secondary"
-                              className="text-[10px] uppercase font-mono px-1.5 py-0 group-data-[collapsible=icon]:hidden"
+                              className="text-[10px] uppercase font-mono px-1.5 py-0 group-data-[collapsible=icon]:hidden shrink-0 ml-auto"
                             >
                               {community.role}
                             </Badge>
