@@ -15,6 +15,7 @@ import {
   Compass,
   Building2,
   Bell,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +24,8 @@ import {
   NotificationsDropdown,
   NotificationsResponse,
 } from "@/components/notifications-dropdown";
+import { CommunitySwitcher } from "@/components/community-switcher";
+import { CreateCommunityDialog } from "@/components/create-community-dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -92,20 +95,45 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+
   const isClient = React.useSyncExternalStore(
     () => () => {},
     () => true,
     () => false
   );
-  const token = isClient ? (typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null) : null;
-  const tokenChecked = Boolean(isClient && token);
 
-  // Check auth token existence on client mount
+  const [authToken, setAuthToken] = React.useState<string | null>(null);
+
+  // Check auth token existence and handle mobile gateway switch deep-link (?token=...)
   React.useEffect(() => {
-    if (isClient && !token) {
-      router.replace("/login");
+    if (isClient) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const queryToken =
+        searchParams.get("token") || searchParams.get("bearer_token");
+      if (queryToken) {
+        localStorage.setItem("bearer_token", queryToken);
+        setAuthToken(queryToken);
+        searchParams.delete("token");
+        searchParams.delete("bearer_token");
+        const remainingQuery = searchParams.toString();
+        const cleanUrl =
+          window.location.pathname +
+          (remainingQuery ? `?${remainingQuery}` : "") +
+          window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+        queryClient.invalidateQueries();
+      } else {
+        const stored = localStorage.getItem("bearer_token");
+        setAuthToken(stored);
+        if (!stored) {
+          router.replace("/login");
+        }
+      }
     }
-  }, [isClient, token, router]);
+  }, [isClient, router, queryClient]);
+
+  const tokenChecked = Boolean(isClient && authToken);
 
   // Fetch current user
   const { data: user, isLoading: isLoadingUser } = useQuery<UserProfile>({
@@ -369,6 +397,17 @@ export default function DashboardLayout({
                       No managed communities yet.
                     </div>
                   )}
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => setIsCreateOpen(true)}
+                      className="text-primary hover:text-primary font-medium cursor-pointer"
+                      tooltip="Create Community"
+                    >
+                      <Plus className="size-4" />
+                      <span>Create Community</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -543,7 +582,16 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
               <SidebarTrigger className="-ml-1 shrink-0" />
               <Separator orientation="vertical" className="mr-2 h-4 shrink-0" />
-              <Breadcrumb className="overflow-hidden">
+
+              <CommunitySwitcher
+                communities={communities}
+                currentSlug={currentSlug}
+                onOpenCreate={() => setIsCreateOpen(true)}
+              />
+
+              <Separator orientation="vertical" className="mx-1 h-4 shrink-0 hidden md:block" />
+
+              <Breadcrumb className="overflow-hidden hidden md:flex">
                 <BreadcrumbList className="flex-nowrap">
                   {breadcrumbs.map((crumb, index) => {
                     const isLast = index === breadcrumbs.length - 1;
@@ -587,6 +635,16 @@ export default function DashboardLayout({
 
             {/* Header Right Actions */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCreateOpen(true)}
+                className="hidden lg:flex gap-1.5 h-8 text-xs font-medium cursor-pointer"
+              >
+                <Plus className="size-3.5" />
+                <span>New Community</span>
+              </Button>
+
               {/* Notifications Dropdown */}
               <NotificationsDropdown />
 
@@ -661,6 +719,11 @@ export default function DashboardLayout({
           <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
         </SidebarInset>
       </div>
+
+      <CreateCommunityDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+      />
     </SidebarProvider>
   );
 }

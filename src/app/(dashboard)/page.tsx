@@ -16,10 +16,12 @@ import {
   RefreshCw,
   Lock,
   Globe,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiGet } from "@/lib/api-client";
+import { CreateCommunityDialog } from "@/components/create-community-dialog";
 import {
   Card,
   CardHeader,
@@ -50,6 +52,7 @@ export interface ManagedCommunity {
 
 export default function DashboardHomePage() {
   const router = useRouter();
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
 
   const {
     data: communities,
@@ -201,14 +204,22 @@ export default function DashboardHomePage() {
             Manage your communities, monitor activity, review reports, and oversee community members.
           </p>
         </div>
-        {communities && communities.length > 0 && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {communities && communities.length > 0 && (
             <Badge variant="secondary" className="px-3 py-1 text-xs font-medium">
               <Sparkles className="mr-1.5 size-3 text-primary" />
               {communities.length} {communities.length === 1 ? "Community" : "Communities"} Managed
             </Badge>
-          </div>
-        )}
+          )}
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            size="sm"
+            className="gap-1.5 cursor-pointer shadow-sm"
+          >
+            <Plus className="size-4" />
+            <span>Create Community</span>
+          </Button>
+        </div>
       </div>
 
       {/* Communities Grid Section */}
@@ -338,18 +349,32 @@ export default function DashboardHomePage() {
         ) : (
           /* Empty State: You don't manage any communities yet */
           <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed border-border/80 bg-card/50">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/80 text-muted-foreground mb-4 ring-8 ring-muted/30">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4 ring-8 ring-primary/5">
               <Building2 className="size-7" />
             </div>
-            <h3 className="text-base font-semibold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground">
               You don&apos;t manage any communities yet
             </h3>
-            <p className="text-xs text-muted-foreground max-w-sm mt-1.5 mb-2 leading-relaxed">
-              When you create a community or get appointed as an owner, administrator, or moderator, it will automatically appear here for you to manage.
+            <p className="text-xs text-muted-foreground max-w-md mt-1.5 mb-5 leading-relaxed">
+              Every community in HobbyHub starts with a creator who becomes its <strong>Owner</strong>.
+              When you create a community or get appointed as an administrator or moderator, it will automatically appear here for you to manage.
             </p>
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              size="default"
+              className="gap-2 cursor-pointer shadow-md font-medium"
+            >
+              <Plus className="size-4" />
+              <span>Create Your First Community</span>
+            </Button>
           </Card>
         )}
       </div>
+
+      <CreateCommunityDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+      />
     </div>
   );
 }
