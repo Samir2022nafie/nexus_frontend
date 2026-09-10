@@ -22,7 +22,6 @@ import {
   X,
   ShieldAlert,
   AlertCircle,
-  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -483,29 +482,12 @@ export default function CommunityMembersPage() {
 
 
       {/* Page Header */}
-      <div className="flex flex-col gap-4 border-b border-border/40 pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <Button
-              render={<Link href={`/communities/${slug}`} />}
-              variant="ghost"
-              size="icon-xs"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              title="Back to Community Overview"
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Community Members
-            </h1>
-            {isLoadingMembers ? (
-              <Skeleton className="h-5 w-12 rounded-full" />
-            ) : (
-              <Badge variant="secondary" className="font-mono text-xs">
-                {meta.total} {meta.total === 1 ? "member" : "members"}
-              </Badge>
-            )}
-          </div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2.5">
+            <Users className="h-7 w-7 text-blue-500" />
+            <span>Community Members</span>
+          </h1>
           <p className="text-sm text-muted-foreground">
             View, moderate, and manage roles for members of{" "}
             <span className="font-medium text-foreground">
@@ -515,29 +497,22 @@ export default function CommunityMembersPage() {
           </p>
         </div>
 
-        {/* Quick link & Refresh actions */}
+        {/* Global actions */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => refetchMembers()}
+            onClick={() => {
+              refetchMembers();
+              toast.info("Refreshed members data");
+            }}
             disabled={isFetchingMembers}
-            className="gap-1.5 shadow-xs"
-            title="Refresh members list"
+            className="gap-1.5"
           >
             <RefreshCw
-              className={`size-3.5 ${isFetchingMembers ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${isFetchingMembers ? "animate-spin" : ""}`}
             />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
-          <Button
-            render={<Link href={`/communities/${slug}`} />}
-            variant="secondary"
-            size="sm"
-            className="gap-1.5 shadow-xs"
-          >
-            <ExternalLink className="size-3.5" />
-            <span>Overview</span>
+            <span>Refresh</span>
           </Button>
         </div>
       </div>

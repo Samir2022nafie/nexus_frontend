@@ -1140,7 +1140,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Pagination Controls */}
-            {reportsMeta && reportsMeta.totalPages && reportsMeta.totalPages > 1 && (
+            {reportsMeta && typeof reportsMeta.totalPages === "number" && reportsMeta.totalPages > 1 ? (
               <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20 text-xs">
                 <div className="text-muted-foreground">
                   Showing page <span className="font-semibold text-foreground">{reportsPage}</span>{" "}
@@ -1172,7 +1172,7 @@ export default function ReportsPage() {
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
           </Card>
         </TabsContent>
 
@@ -1362,7 +1362,7 @@ export default function ReportsPage() {
               </Table>
             </div>
 
-            {actionsMeta && actionsMeta.totalPages && actionsMeta.totalPages > 1 && (
+            {actionsMeta && typeof actionsMeta.totalPages === "number" && actionsMeta.totalPages > 1 ? (
               <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20 text-xs">
                 <div className="text-muted-foreground">
                   Showing page <span className="font-semibold text-foreground">{actionsPage}</span>{" "}
@@ -1391,7 +1391,7 @@ export default function ReportsPage() {
                   </Button>
                 </div>
               </div>
-            )}
+            ) : null}
           </Card>
         </TabsContent>
 

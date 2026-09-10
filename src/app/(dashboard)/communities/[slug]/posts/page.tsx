@@ -499,30 +499,24 @@ export default function CommunityPostsPage() {
       {/* =====================================================================
           Page Header
       ====================================================================== */}
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-              Community Posts
-            </h1>
-            {overviewData?.community?.name && (
-              <Badge variant="outline" className="hidden text-xs sm:inline-flex">
-                {overviewData.community.name}
-              </Badge>
-            )}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2.5">
+            <MessageSquare className="h-7 w-7 text-blue-500" />
+            <span>Community Posts</span>
+          </h1>
+          <p className="text-sm text-muted-foreground">
             Manage, review, and moderate discussions, media, and comments shared across your community.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetchPosts()}
             disabled={isFetchingPosts}
-            className="gap-2"
+            className="gap-1.5"
           >
             <RefreshCw
               className={`h-4 w-4 ${isFetchingPosts ? "animate-spin" : ""}`}
@@ -541,12 +535,12 @@ export default function CommunityPostsPage() {
           setActiveTab(val as "active" | "removed");
           setPage(1);
         }}
-        className="w-full space-y-4"
+        className="w-full flex flex-col space-y-4"
       >
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
             <TabsTrigger value="active" className="gap-2">
-              <FileText className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
               <span>Active</span>
               <Badge
                 variant="secondary"
@@ -639,7 +633,7 @@ export default function CommunityPostsPage() {
                     </>
                   ) : (
                     <>
-                      <FileText className="h-10 w-10 text-muted-foreground/60 mb-3" />
+                      <MessageSquare className="h-10 w-10 text-muted-foreground/60 mb-3" />
                       <h3 className="text-base font-semibold text-foreground">
                         No posts yet
                       </h3>
@@ -661,7 +655,7 @@ export default function CommunityPostsPage() {
           </Card>
 
           {/* Pagination Controls */}
-          {meta.totalPages && meta.totalPages > 1 && (
+          {meta.totalPages && meta.totalPages > 1 ? (
             <div className="flex items-center justify-between px-2 py-2">
               <p className="text-xs text-muted-foreground">
                 Showing page <span className="font-medium text-foreground">{meta.page || page}</span> of{" "}
@@ -694,7 +688,7 @@ export default function CommunityPostsPage() {
                 </Button>
               </div>
             </div>
-          )}
+          ) : null}
         </TabsContent>
 
         {/* ===================================================================

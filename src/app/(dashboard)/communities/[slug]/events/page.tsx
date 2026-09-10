@@ -77,7 +77,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 
 // ============================================================================
 // Types
@@ -658,33 +658,30 @@ export default function CommunityEventsPage() {
     const isForbidden = axiosError?.response?.status === 403;
 
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
-        <Card className="max-w-md border-destructive/20 shadow-md">
-          <CardHeader className="pb-2 text-center">
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <ShieldAlert className="h-6 w-6" />
+      <div className="container mx-auto max-w-4xl py-12 px-4">
+        <Card className="border-destructive/40 shadow-sm">
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <ShieldAlert className="h-8 w-8" />
             </div>
-            <CardTitle className="text-xl">
+            <CardTitle className="text-2xl font-bold tracking-tight">
               {isForbidden ? "Access Denied" : "Unable to load events"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base text-muted-foreground mt-2 max-w-md mx-auto">
               {isForbidden
                 ? "Only community administrators, moderators, and the owner have permission to manage events in this community."
                 : "An unexpected error occurred while verifying community permissions. Please try again later."}
             </CardDescription>
           </CardHeader>
-          <CardFooter className="flex justify-center gap-2 pb-6">
+          <CardContent className="flex justify-center pb-8">
             <Button
+              variant="default"
               render={<Link href={`/communities/${slug}`} />}
-              variant="outline"
             >
-              <ArrowLeft className="mr-1.5 h-4 w-4" />
-              Community Overview
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span>Back to Community Overview</span>
             </Button>
-            <Button render={<Link href="/" />} variant="secondary">
-              Dashboard Home
-            </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
       </div>
     );
@@ -695,132 +692,138 @@ export default function CommunityEventsPage() {
   // --------------------------------------------------------------------------
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
-
-
-      {/* Top Return Link */}
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/communities/${slug}`}
-          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to {overviewData?.community?.name || "Community Overview"}
-        </Link>
-        {overviewData?.myRole && (
-          <Badge variant="secondary" className="capitalize flex items-center gap-1">
-            <ShieldCheck className="h-3 w-3 text-primary" />
-            {overviewData.myRole}
-          </Badge>
-        )}
-      </div>
-
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+    <div className="flex-1 space-y-6 max-w-7xl mx-auto w-full">
+      {/* Header & Navigation */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2.5">
             <CalendarIcon className="h-7 w-7 text-primary" />
-            Events Management
+            <span>Events Management</span>
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground">
             Schedule community gatherings, manage approved events, and review member proposals.
           </p>
         </div>
-        <Button
-          onClick={() => setIsCreateOpen(true)}
-          className="w-full sm:w-auto shadow-sm"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create Event
-        </Button>
+
+        {/* Global actions */}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            size="sm"
+            className="shadow-sm gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Event</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (activeTab === "upcoming") refetchEvents();
+              else refetchPending();
+              toast.info("Refreshed events data");
+            }}
+            disabled={isLoadingEvents || isLoadingPending}
+            className="gap-1.5"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${
+                isLoadingEvents || isLoadingPending ? "animate-spin" : ""
+              }`}
+            />
+            <span>Refresh</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Tabs Container */}
+      {/* Tab Navigation */}
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
-        className="flex flex-col gap-6"
+        onValueChange={(val) => {
+          setActiveTab(val);
+        }}
+        className="space-y-6"
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <TabsList className="grid w-full sm:w-auto grid-cols-2">
-            <TabsTrigger value="upcoming" className="px-4">
-              Upcoming Events
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-4">
+          <TabsList className="grid grid-cols-2 w-full sm:w-[380px]">
+            <TabsTrigger value="upcoming" className="gap-2">
+              <CalendarIcon className="h-4 w-4 text-primary" />
+              <span>Upcoming Events</span>
               {upcomingEvents.length > 0 && (
-                <Badge variant="secondary" className="ml-2 py-0 px-1.5 text-xs">
+                <Badge
+                  variant="secondary"
+                  className="ml-1 px-1.5 py-0.2 text-[10px] font-semibold h-4 min-w-4 flex items-center justify-center rounded-full"
+                >
                   {upcomingEvents.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="proposals" className="px-4">
-              Pending Proposals
+            <TabsTrigger value="proposals" className="gap-2">
+              <Clock className="h-4 w-4 text-amber-500" />
+              <span>Pending Proposals</span>
               {pendingEvents.length > 0 && (
-                <Badge variant="destructive" className="ml-2 py-0 px-1.5 text-xs">
+                <Badge
+                  variant="destructive"
+                  className="ml-1 px-1.5 py-0.2 text-[10px] font-semibold h-4 min-w-4 flex items-center justify-center rounded-full"
+                >
                   {pendingEvents.length}
                 </Badge>
               )}
             </TabsTrigger>
           </TabsList>
-
-          {/* Quick Refresh Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (activeTab === "upcoming") refetchEvents();
-              else refetchPending();
-            }}
-            className="text-muted-foreground"
-          >
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Refresh
-          </Button>
         </div>
 
         {/* ================================================================== */}
         {/* TAB 1: UPCOMING EVENTS                                             */}
         {/* ================================================================== */}
-        <TabsContent value="upcoming" className="flex flex-col gap-4">
-          {/* Filter & Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-card p-3 rounded-xl border shadow-xs">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search events by title..."
-                value={upcomingSearch}
-                onChange={(e) => setUpcomingSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
-              {upcomingSearch && (
-                <button
-                  type="button"
-                  onClick={() => setUpcomingSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+        <TabsContent value="upcoming" className="space-y-6 outline-none">
+          {/* Filter Bar */}
+          <Card className="bg-card/50 shadow-none border">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                {/* Search input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search events by title or description..."
+                    value={upcomingSearch}
+                    onChange={(e) => setUpcomingSearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                  {upcomingSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setUpcomingSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                <Filter className="h-3 w-3" /> Visibility:
-              </span>
-              <Select
-                value={visibilityFilter}
-                onValueChange={(val) => setVisibilityFilter(val || "all")}
-              >
-                <SelectTrigger className="w-36 h-9 text-xs">
-                  <SelectValue placeholder="All Scopes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Scopes</SelectItem>
-                  <SelectItem value="public">Public</SelectItem>
-                  <SelectItem value="community">Community Only</SelectItem>
-                  <SelectItem value="subcommunity">Subcommunity</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                {/* Filters */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="w-[160px]">
+                    <Select
+                      value={visibilityFilter}
+                      onValueChange={(val) => setVisibilityFilter(val || "all")}
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <Filter className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                        <SelectValue placeholder="All Scopes" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Scopes</SelectItem>
+                        <SelectItem value="public">Public</SelectItem>
+                        <SelectItem value="community">Community Only</SelectItem>
+                        <SelectItem value="subcommunity">Subcommunity</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Events Table Container */}
           <div className="rounded-xl border bg-card shadow-xs overflow-hidden">
@@ -1065,7 +1068,7 @@ export default function CommunityEventsPage() {
         {/* ================================================================== */}
         {/* TAB 2: PENDING PROPOSALS                                           */}
         {/* ================================================================== */}
-        <TabsContent value="proposals" className="flex flex-col gap-4">
+        <TabsContent value="proposals" className="space-y-6 outline-none">
           <div className="rounded-xl border bg-card shadow-xs overflow-hidden">
             {isLoadingPending ? (
               <div className="p-6 space-y-4">
