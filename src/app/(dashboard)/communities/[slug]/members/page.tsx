@@ -677,7 +677,10 @@ export default function CommunityMembersPage() {
                   >
                     {/* Column 1: Member Avatar, Display Name, Username */}
                     <TableCell>
-                      <div className="flex items-center gap-3">
+                      <Link
+                        href={isSelf ? "/profile" : `/users/${member.userId}`}
+                        className="group flex items-center gap-3 transition-opacity hover:opacity-85"
+                      >
                         <Avatar className="size-9 border border-border/50 shrink-0">
                           {member.user?.profile_picture_url ? (
                             <AvatarImage
@@ -691,7 +694,7 @@ export default function CommunityMembersPage() {
                         </Avatar>
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-foreground truncate text-sm">
+                            <span className="font-medium text-foreground truncate text-sm group-hover:text-primary transition-colors">
                               {displayName}
                             </span>
                             {isSelf && (
@@ -703,11 +706,13 @@ export default function CommunityMembersPage() {
                               </Badge>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground truncate font-mono">
-                            @{member.user?.username || "unknown"}
-                          </span>
+                          {member.user?.username && (
+                            <span className="text-xs text-muted-foreground font-mono truncate">
+                              @{member.user.username}
+                            </span>
+                          )}
                         </div>
-                      </div>
+                      </Link>
                     </TableCell>
 
                     {/* Column 2: Role (Select if Owner & not Owner Row; else Badge) */}

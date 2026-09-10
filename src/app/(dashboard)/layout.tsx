@@ -11,14 +11,14 @@ import {
   Calendar,
   ShieldAlert,
   Settings,
-  LogOut,
-  Compass,
   Building2,
+  Compass,
+  Globe,
   Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { apiGet, apiPost } from "@/lib/api-client";
+import { apiGet } from "@/lib/api-client";
 import {
   NotificationsDropdown,
   NotificationsResponse,
@@ -26,7 +26,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -48,14 +47,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -184,20 +175,17 @@ export default function DashboardLayout({
     return communities.find((c) => c.slug === currentSlug) || null;
   }, [currentSlug, communities]);
 
-  // Handle Logout
-  const handleLogout = async () => {
-    try {
-      await apiPost("/auth/logout");
-    } catch {
-      // Proceed even if network/backend logout fails
-    } finally {
-      localStorage.removeItem("bearer_token");
-      localStorage.removeItem("auth_user");
-      queryClient.clear();
-      toast.success("Logged out successfully");
-      router.replace("/login");
-    }
-  };
+  // Fetch community metadata for non-managed communities to display the human name in breadcrumbs
+  const { data: publicCommMeta } = useQuery<{ name: string; slug: string }>({
+    queryKey: ["communityBreadcrumbMeta", currentSlug],
+    queryFn: () =>
+      apiGet<{ name: string; slug: string }>(`/communities/${currentSlug}`),
+    enabled: Boolean(tokenChecked && currentSlug && !currentCommunity),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const communityDisplayName =
+    currentCommunity?.name || publicCommMeta?.name || currentSlug || "Community";
 
   // User initials for avatar fallback
   const userInitials = React.useMemo(() => {
@@ -223,24 +211,44 @@ export default function DashboardLayout({
       return [{ label: "Dashboard", href: "/", isCurrent: true }];
     }
 
-    const crumbs: Array<{ label: string; href?: string; isCurrent?: boolean }> = [
-      { label: "Dashboard", href: "/" },
-    ];
+    if (pathname === "/explore") {
+      return [{ label: "Explore", href: "/explore", isCurrent: true }];
+    }
 
     if (pathname.startsWith("/notifications")) {
-      crumbs.push({ label: "Notifications", isCurrent: true });
-      return crumbs;
+      return [{ label: "Notifications", href: "/notifications", isCurrent: true }];
+    }
+
+    if (pathname.startsWith("/profile")) {
+      return [{ label: "My Profile", href: "/profile", isCurrent: true }];
+    }
+
+    if (pathname.startsWith("/users/")) {
+      return [
+        { label: "Explore", href: "/explore" },
+        { label: "User Profile", isCurrent: true },
+      ];
     }
 
     if (currentSlug) {
-      const communityName = currentCommunity?.name || currentSlug;
+      // If user is a manager of this community: root is Dashboard
+      // If user does NOT manage this community (e.g. visiting public preview): root is Explore
+      const isManagerOfThis = Boolean(currentCommunity);
+      const rootCrumb = isManagerOfThis
+        ? { label: "Dashboard", href: "/" }
+        : { label: "Explore", href: "/explore" };
+
+      const crumbs: Array<{ label: string; href?: string; isCurrent?: boolean }> = [
+        rootCrumb,
+      ];
+
       const subpath = pathname.replace(`/communities/${currentSlug}`, "");
 
       if (!subpath || subpath === "") {
-        crumbs.push({ label: communityName, isCurrent: true });
+        crumbs.push({ label: communityDisplayName, isCurrent: true });
       } else {
         crumbs.push({
-          label: communityName,
+          label: communityDisplayName,
           href: `/communities/${currentSlug}`,
         });
 
@@ -262,10 +270,12 @@ export default function DashboardLayout({
           });
         }
       }
+
+      return crumbs;
     }
 
-    return crumbs;
-  }, [pathname, currentSlug, currentCommunity]);
+    return [{ label: "Dashboard", href: "/", isCurrent: true }];
+  }, [pathname, currentSlug, currentCommunity, communityDisplayName]);
 
   if (!tokenChecked) {
     return (
@@ -317,6 +327,17 @@ export default function DashboardLayout({
                     >
                       <LayoutDashboard className="size-4" />
                       <span>Dashboard Home</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      render={<Link href="/explore" />}
+                      isActive={pathname.startsWith("/explore")}
+                      tooltip="Explore Communities"
+                    >
+                      <Globe className="size-4" />
+                      <span>Explore Communities</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
@@ -397,12 +418,12 @@ export default function DashboardLayout({
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Nav Group 3: Community Management (Contextual) */}
-            {currentSlug && (
+            {/* Nav Group 3: Community Management (Contextual - Only for Managers) */}
+            {currentCommunity && (
               <SidebarGroup>
                 <SidebarGroupLabel>
                   <span className="truncate">
-                    {currentCommunity?.name || "Community"}
+                    {currentCommunity.name}
                   </span>
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -500,60 +521,6 @@ export default function DashboardLayout({
             )}
           </SidebarContent>
 
-          {/* Sidebar Footer */}
-          <SidebarFooter className="border-t border-border p-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground outline-none transition-colors"
-                  />
-                }
-              >
-                <Avatar size="sm">
-                  {user?.profile_picture_url && (
-                    <AvatarImage
-                      src={user.profile_picture_url}
-                      alt={user.name || user.username}
-                    />
-                  )}
-                  <AvatarFallback>{userInitials}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-1 flex-col overflow-hidden text-xs leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-medium text-foreground">
-                    {user?.name || user?.username || "Admin User"}
-                  </span>
-                  <span className="truncate text-muted-foreground">
-                    {user?.email || `@${user?.username || "user"}`}
-                  </span>
-                </div>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" side="top" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-sm font-semibold text-foreground">
-                      {user?.name || user?.username || "Admin User"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {user?.email || `@${user?.username || "user"}`}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={handleLogout}
-                  className="cursor-pointer"
-                >
-                  <LogOut className="mr-2 size-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarFooter>
-
           <SidebarRail />
         </Sidebar>
 
@@ -609,8 +576,6 @@ export default function DashboardLayout({
 
             {/* Header Right Actions */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-
-
               {/* Notifications Dropdown */}
               <NotificationsDropdown />
 
@@ -619,64 +584,24 @@ export default function DashboardLayout({
               {isLoadingUser ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <button
-                          type="button"
-                          className="flex items-center gap-2 rounded-full p-1 outline-none hover:bg-muted/80 transition-colors cursor-pointer"
-                        />
-                      }
-                    >
-                      <span className="hidden text-xs font-medium text-muted-foreground sm:inline-block">
-                        {user?.name || user?.username}
-                      </span>
-                      <Avatar size="sm">
-                        {user?.profile_picture_url && (
-                          <AvatarImage
-                            src={user.profile_picture_url}
-                            alt={user.name || user.username}
-                          />
-                        )}
-                        <AvatarFallback>{userInitials}</AvatarFallback>
-                      </Avatar>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" side="bottom" className="w-56">
-                      <DropdownMenuLabel>
-                        <div className="flex flex-col gap-0.5">
-                          <p className="text-sm font-semibold text-foreground">
-                            {user?.name || user?.username || "Admin User"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {user?.email || `@${user?.username || "user"}`}
-                          </p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={handleLogout}
-                        className="cursor-pointer"
-                      >
-                        <LogOut className="mr-2 size-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <Separator orientation="vertical" className="h-4 hidden sm:block" />
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleLogout}
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 text-xs gap-1.5 h-8 px-2"
-                  >
-                    <LogOut className="size-3.5" />
-                    <span className="hidden sm:inline">Log out</span>
-                  </Button>
-                </>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 rounded-full py-1 px-2.5 outline-none hover:bg-muted/80 transition-colors cursor-pointer border border-border/40 hover:border-border"
+                  title="My Profile"
+                >
+                  <span className="hidden text-xs font-medium text-foreground sm:inline-block max-w-[140px] truncate">
+                    {user?.name || user?.username}
+                  </span>
+                  <Avatar size="sm">
+                    {user?.profile_picture_url && (
+                      <AvatarImage
+                        src={user.profile_picture_url}
+                        alt={user.name || user.username}
+                      />
+                    )}
+                    <AvatarFallback>{userInitials}</AvatarFallback>
+                  </Avatar>
+                </Link>
               )}
             </div>
           </header>
