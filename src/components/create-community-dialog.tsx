@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 
 import { apiPost } from "@/lib/api-client";
-import { SYSTEM_CATEGORIES } from "@/lib/taxonomy";
+import { SYSTEM_CATEGORIES, getCategoryById } from "@/lib/taxonomy";
 import {
   Dialog,
   DialogContent,
@@ -48,15 +48,6 @@ const createCommunitySchema = z.object({
     .string()
     .min(3, "Community name must be at least 3 characters")
     .max(50, "Community name cannot exceed 50 characters")
-    .trim(),
-  slug: z
-    .string()
-    .min(3, "Slug must be at least 3 characters")
-    .max(50, "Slug cannot exceed 50 characters")
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Slug can only contain lowercase letters, numbers, and hyphens (e.g. tech-explorers)"
-    )
     .trim(),
   categoryId: z.string().min(1, "Please select a community category"),
   description: z
@@ -103,6 +94,19 @@ interface CreateCommunityDialogProps {
   trigger?: React.ReactNode;
 }
 
+function generateSlug(name: string): string {
+  const clean = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const base = clean.length >= 2 ? clean.slice(0, 44) : "community";
+  const suffix = Math.random().toString(36).substring(2, 6);
+  return `${base}-${suffix}`;
+}
+
 export function CreateCommunityDialog({
   open,
   onOpenChange,
@@ -110,13 +114,11 @@ export function CreateCommunityDialog({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [slugModifiedByUser, setSlugModifiedByUser] = React.useState(false);
 
   const {
     register,
     handleSubmit,
     control,
-    setValue,
     watch,
     reset,
     formState: { errors },
@@ -124,7 +126,6 @@ export function CreateCommunityDialog({
     resolver: zodResolver(createCommunitySchema),
     defaultValues: {
       name: "",
-      slug: "",
       categoryId: SYSTEM_CATEGORIES[0]?.id || "",
       description: "",
       rules: "",
@@ -134,28 +135,12 @@ export function CreateCommunityDialog({
     },
   });
 
-  const watchName = watch("name");
   const watchIsPrivate = watch("isPrivate");
-
-  // Auto-generate slug from name if user hasn't typed custom slug
-  React.useEffect(() => {
-    if (!slugModifiedByUser && watchName) {
-      const generatedSlug = watchName
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .slice(0, 50);
-      setValue("slug", generatedSlug, { shouldValidate: true });
-    }
-  }, [watchName, slugModifiedByUser, setValue]);
 
   // Reset form when dialog opens/closes
   React.useEffect(() => {
     if (!open) {
       reset();
-      setSlugModifiedByUser(false);
       setIsSubmitting(false);
     }
   }, [open, reset]);
@@ -163,6 +148,7 @@ export function CreateCommunityDialog({
   const onSubmit = async (values: CreateCommunityFormValues) => {
     setIsSubmitting(true);
     try {
+      const generatedSlug = generateSlug(values.name);
       const payload: {
         name: string;
         slug: string;
@@ -174,7 +160,7 @@ export function CreateCommunityDialog({
         isPrivate: boolean;
       } = {
         name: values.name.trim(),
-        slug: values.slug.trim(),
+        slug: generatedSlug,
         categoryId: values.categoryId,
         isPrivate: Boolean(values.isPrivate),
       };
@@ -204,12 +190,12 @@ export function CreateCommunityDialog({
       onOpenChange(false);
 
       // Navigate to the newly created community management dashboard
-      const targetSlug = res?.slug || values.slug;
+      const targetSlug = res?.slug || generatedSlug;
       router.push(`/communities/${targetSlug}`);
     } catch (err) {
       if (isAxiosError(err)) {
         if (err.response?.status === 409) {
-          toast.error("A community with this slug already exists. Please choose a different slug.");
+          toast.error("A community with this name already exists. Please try a different name.");
         } else {
           const apiMessage =
             (err.response?.data as { error?: { message?: string } })?.error?.message;
@@ -259,34 +245,6 @@ export function CreateCommunityDialog({
             )}
           </div>
 
-          {/* Slug Field */}
-          <div className="space-y-1.5">
-            <Label htmlFor="comm-slug" className="text-xs font-semibold">
-              URL Slug <span className="text-destructive">*</span>
-            </Label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-xs text-muted-foreground font-mono select-none">
-                /communities/
-              </span>
-              <Input
-                id="comm-slug"
-                placeholder="addis-tech-enthusiasts"
-                {...register("slug")}
-                onChange={(e) => {
-                  setSlugModifiedByUser(true);
-                  register("slug").onChange(e);
-                }}
-                disabled={isSubmitting}
-                className="pl-28 font-mono text-xs"
-              />
-            </div>
-            {errors.slug && (
-              <p className="text-[11px] text-destructive font-medium">
-                {errors.slug.message}
-              </p>
-            )}
-          </div>
-
           {/* Category Selector */}
           <div className="space-y-1.5">
             <Label htmlFor="comm-category" className="text-xs font-semibold">
@@ -302,11 +260,22 @@ export function CreateCommunityDialog({
                   disabled={isSubmitting}
                 >
                   <SelectTrigger id="comm-category" className="w-full text-xs">
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder="Select a category">
+                      {(value: string | null) => {
+                        if (!value) return "Select a category";
+                        const cat = getCategoryById(value);
+                        return cat ? cat.label : value;
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     {SYSTEM_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id} className="text-xs">
+                      <SelectItem
+                        key={cat.id}
+                        value={cat.id}
+                        label={cat.label}
+                        className="text-xs"
+                      >
                         <div className="flex flex-col text-left">
                           <span className="font-medium text-foreground">
                             {cat.label}

@@ -28,7 +28,6 @@ import {
   FileText,
   Sparkles,
   CheckCircle2,
-  Copy,
   Layers,
   Save,
   Loader2,
@@ -337,13 +336,7 @@ export default function CommunitySettingsPage() {
     }
   };
 
-  // Copy slug to clipboard
-  const handleCopySlug = () => {
-    if (community?.slug) {
-      navigator.clipboard.writeText(community.slug);
-      toast.success("Slug copied to clipboard!");
-    }
-  };
+
 
   // --------------------------------------------------------------------------
   // 403 Forbidden State Handling
@@ -568,46 +561,8 @@ export default function CommunitySettingsPage() {
                 </p>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                {/* Community Slug (Read-Only) */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label
-                      htmlFor="slug"
-                      className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                    >
-                      Slug (URL Identifier)
-                    </Label>
-                    <Badge variant="secondary" className="font-mono text-[10px] uppercase">
-                      Permanent
-                    </Badge>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <Input
-                      id="slug"
-                      value={community.slug}
-                      disabled
-                      readOnly
-                      className="bg-muted/50 font-mono text-xs text-muted-foreground select-all"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={handleCopySlug}
-                      title="Copy Slug"
-                      className="shrink-0"
-                    >
-                      <Copy className="size-3.5" />
-                    </Button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    The URL path (<span className="font-mono">/communities/{community.slug}</span>) cannot be changed after creation.
-                  </p>
-                </div>
-
-                {/* Category (Read-Only with Tooltip) */}
-                <div className="space-y-2">
+              {/* Category (Read-Only with Tooltip) */}
+              <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <Label
@@ -647,7 +602,6 @@ export default function CommunitySettingsPage() {
                     Determined during initial community registration and permanently locked.
                   </p>
                 </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -1003,15 +957,15 @@ export default function CommunitySettingsPage() {
 
             {/* Extra safety confirmation */}
             <div className="space-y-2 py-2">
-              <Label htmlFor="confirm-slug" className="text-xs text-muted-foreground">
-                Please type <span className="font-mono font-bold text-foreground">{community.slug}</span> to confirm:
+              <Label htmlFor="confirm-name" className="text-xs text-muted-foreground">
+                Please type <span className="font-semibold text-foreground">&quot;{community.name}&quot;</span> to confirm:
               </Label>
               <Input
-                id="confirm-slug"
+                id="confirm-name"
                 value={deleteConfirmationText}
                 onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                placeholder={community.slug}
-                className="font-mono text-xs"
+                placeholder={community.name}
+                className="text-xs"
               />
             </div>
 
@@ -1029,14 +983,14 @@ export default function CommunitySettingsPage() {
                 variant="destructive"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (deleteConfirmationText === community.slug) {
+                  if (deleteConfirmationText.trim() === community.name.trim()) {
                     deleteCommunityMutation.mutate();
                   } else {
-                    toast.error("Please type the exact community slug to confirm deletion.");
+                    toast.error("Please type the exact community name to confirm deletion.");
                   }
                 }}
                 disabled={
-                  deleteConfirmationText !== community.slug ||
+                  deleteConfirmationText.trim() !== community.name.trim() ||
                   deleteCommunityMutation.isPending
                 }
                 className="gap-1.5"

@@ -297,9 +297,6 @@ export default function DashboardHomePage() {
                           <CardTitle className="truncate text-base font-semibold text-foreground group-hover:text-primary transition-colors">
                             {community.name}
                           </CardTitle>
-                          <p className="text-xs text-muted-foreground truncate font-mono">
-                            /{community.slug}
-                          </p>
                         </div>
                       </div>
                       {getRoleBadge(community.role)}

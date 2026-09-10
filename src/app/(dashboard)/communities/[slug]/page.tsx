@@ -603,12 +603,8 @@ export default function CommunityOverviewPage() {
               </p>
             )}
 
-            {/* Meta Row: Slug, Location, Created Date */}
+            {/* Meta Row: Location, Created Date */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5 font-mono">
-                <span className="text-muted-foreground/60">slug:</span>
-                <span className="text-foreground">{community.slug}</span>
-              </div>
               {community.location?.place_name && (
                 <div className="flex items-center gap-1.5">
                   <MapPin className="size-3.5 text-muted-foreground" />
