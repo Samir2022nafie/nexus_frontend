@@ -20,14 +20,7 @@ import {
 import { toast } from "sonner";
 
 import { apiGet, apiPatch, ApiMeta } from "@/lib/api-client";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import {
   Card,
   CardContent,
@@ -185,20 +178,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
-      {/* ------------------------------------------------------------------
-          1. In-Page Breadcrumbs
-      ------------------------------------------------------------------ */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/" />}>Dashboard</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Notifications</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+
 
       {/* ------------------------------------------------------------------
           2. Page Header & Actions

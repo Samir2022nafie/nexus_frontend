@@ -36,14 +36,7 @@ import {
 import { toast } from "sonner";
 
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import {
   Card,
   CardHeader,
@@ -481,24 +474,7 @@ export default function CommunitySettingsPage() {
   return (
     <TooltipProvider delay={150}>
       <div className="mx-auto max-w-4xl space-y-6">
-        {/* In-Page Breadcrumb */}
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href="/" />}>Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href={`/communities/${slug}`} />}>
-                {community.name}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Settings</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+
 
         {/* Top Header Navigation */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

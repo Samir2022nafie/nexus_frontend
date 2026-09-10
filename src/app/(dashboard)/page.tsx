@@ -206,19 +206,21 @@ export default function DashboardHomePage() {
         </div>
         <div className="flex items-center gap-2">
           {communities && communities.length > 0 && (
-            <Badge variant="secondary" className="px-3 py-1 text-xs font-medium">
-              <Sparkles className="mr-1.5 size-3 text-primary" />
-              {communities.length} {communities.length === 1 ? "Community" : "Communities"} Managed
-            </Badge>
+            <>
+              <Badge variant="secondary" className="px-3 py-1 text-xs font-medium">
+                <Sparkles className="mr-1.5 size-3 text-primary" />
+                {communities.length} {communities.length === 1 ? "Community" : "Communities"} Managed
+              </Badge>
+              <Button
+                onClick={() => setIsCreateOpen(true)}
+                size="sm"
+                className="gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Plus className="size-4" />
+                <span>Create Community</span>
+              </Button>
+            </>
           )}
-          <Button
-            onClick={() => setIsCreateOpen(true)}
-            size="sm"
-            className="gap-1.5 cursor-pointer shadow-sm"
-          >
-            <Plus className="size-4" />
-            <span>Create Community</span>
-          </Button>
         </div>
       </div>
 

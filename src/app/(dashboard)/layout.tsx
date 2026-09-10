@@ -15,7 +15,6 @@ import {
   Compass,
   Building2,
   Bell,
-  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,8 +23,6 @@ import {
   NotificationsDropdown,
   NotificationsResponse,
 } from "@/components/notifications-dropdown";
-import { CommunitySwitcher } from "@/components/community-switcher";
-import { CreateCommunityDialog } from "@/components/create-community-dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -95,7 +92,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
 
   const isClient = React.useSyncExternalStore(
     () => () => {},
@@ -397,17 +393,6 @@ export default function DashboardLayout({
                       No managed communities yet.
                     </div>
                   )}
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => setIsCreateOpen(true)}
-                      className="text-primary hover:text-primary font-medium cursor-pointer"
-                      tooltip="Create Community"
-                    >
-                      <Plus className="size-4" />
-                      <span>Create Community</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -415,12 +400,9 @@ export default function DashboardLayout({
             {/* Nav Group 3: Community Management (Contextual) */}
             {currentSlug && (
               <SidebarGroup>
-                <SidebarGroupLabel className="flex items-center justify-between">
+                <SidebarGroupLabel>
                   <span className="truncate">
                     {currentCommunity?.name || "Community"}
-                  </span>
-                  <span className="text-[10px] uppercase text-muted-foreground">
-                    Context
                   </span>
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -583,15 +565,7 @@ export default function DashboardLayout({
               <SidebarTrigger className="-ml-1 shrink-0" />
               <Separator orientation="vertical" className="mr-2 h-4 shrink-0" />
 
-              <CommunitySwitcher
-                communities={communities}
-                currentSlug={currentSlug}
-                onOpenCreate={() => setIsCreateOpen(true)}
-              />
-
-              <Separator orientation="vertical" className="mx-1 h-4 shrink-0 hidden md:block" />
-
-              <Breadcrumb className="overflow-hidden hidden md:flex">
+              <Breadcrumb className="overflow-hidden flex">
                 <BreadcrumbList className="flex-nowrap">
                   {breadcrumbs.map((crumb, index) => {
                     const isLast = index === breadcrumbs.length - 1;
@@ -635,15 +609,7 @@ export default function DashboardLayout({
 
             {/* Header Right Actions */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCreateOpen(true)}
-                className="hidden lg:flex gap-1.5 h-8 text-xs font-medium cursor-pointer"
-              >
-                <Plus className="size-3.5" />
-                <span>New Community</span>
-              </Button>
+
 
               {/* Notifications Dropdown */}
               <NotificationsDropdown />
@@ -719,11 +685,6 @@ export default function DashboardLayout({
           <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
         </SidebarInset>
       </div>
-
-      <CreateCommunityDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-      />
     </SidebarProvider>
   );
 }

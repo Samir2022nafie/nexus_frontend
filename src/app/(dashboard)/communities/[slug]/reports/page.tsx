@@ -37,14 +37,7 @@ import {
 import { toast } from "sonner";
 
 import { apiGet, apiPatch, apiPost, ApiMeta } from "@/lib/api-client";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import {
   Table,
   TableHeader,
@@ -817,24 +810,7 @@ export default function ReportsPage() {
 
   return (
     <div className="flex-1 space-y-6 max-w-7xl mx-auto w-full">
-      {/* In-Page Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/" />}>Dashboard</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href={`/communities/${slug}`} />}>
-              {communityName}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Reports</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+
 
       {/* Header & Navigation */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
