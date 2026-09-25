@@ -189,7 +189,7 @@ export default function ExploreCommunitiesPage() {
             <span>Explore Communities</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Discover public communities across HobbyHub, connect with new groups, or join shared hobbies.
+            Discover public communities across Nexus, connect with new groups, or join shared hobbies.
           </p>
         </div>
       </div>

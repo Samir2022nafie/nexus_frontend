@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { isAxiosError } from "axios";
-import { Compass, Loader2, Lock, UserCheck } from "lucide-react";
+import { Loader2, UserCheck, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiPost } from "@/lib/api-client";
@@ -22,11 +22,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { NexusLogo } from "@/components/ui/nexus-logo";
 
 const loginSchema = z.object({
   identifier: z
     .string()
-    .min(1, "Email or phone number is required")
+    .min(1, "Email, phone number, or username is required")
     .trim(),
   password: z
     .string()
@@ -52,6 +53,7 @@ interface LoginResponseData {
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const {
     register,
@@ -117,12 +119,12 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md border-border/70 bg-card/95 shadow-2xl shadow-foreground/5 backdrop-blur-sm sm:rounded-2xl">
         <CardHeader className="space-y-3 pb-6 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10">
-            <Compass className="size-6" />
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10 p-2.5">
+            <NexusLogo className="w-full h-full" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-              HobbyHub Admin
+              Nexus Admin
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
               Sign in to manage your communities, events, and moderation.
@@ -132,16 +134,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            {/* Identifier Field (Email or Phone) */}
+            {/* Identifier Field (Email, Phone, or Username) */}
             <div className="space-y-1.5">
               <Label htmlFor="identifier" className="text-sm font-medium text-foreground">
-                Email or Phone Number
+                Email, Phone, or Username
               </Label>
               <div className="relative">
                 <Input
                   id="identifier"
                   type="text"
-                  placeholder="name@example.com or +2519..."
                   autoComplete="username"
                   disabled={isLoading}
                   className="h-10 pr-10 rounded-lg border-border/80 focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -162,18 +163,30 @@ export default function LoginPage() {
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Password
                 </Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-primary hover:underline underline-offset-4"
+                >
+                  Forgot Password?
+                </Link>
               </div>
               <div className="relative">
                 <Input
                   id="password"
-                  type="password"
-                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   disabled={isLoading}
                   className="h-10 pr-10 rounded-lg border-border/80 focus-visible:ring-2 focus-visible:ring-primary/30"
                   {...register("password")}
                 />
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
               </div>
               {errors.password && (
                 <p className="text-xs font-medium text-destructive">

@@ -932,7 +932,7 @@ export default function CommunityMembersPage() {
                   kickMemberMutation.mutate(memberToKick.userId);
                 }
               }}
-              className="gap-1.5"
+              className="gap-1.5 bg-red-600 hover:bg-red-700 text-white font-medium cursor-pointer"
             >
               {kickMemberMutation.isPending ? (
                 <>

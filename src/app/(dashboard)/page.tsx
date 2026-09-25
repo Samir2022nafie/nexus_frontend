@@ -17,11 +17,15 @@ import {
   Lock,
   Globe,
   Plus,
+  MessageSquare,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiGet } from "@/lib/api-client";
 import { CreateCommunityDialog } from "@/components/create-community-dialog";
+import { CreatePostDialog } from "@/components/create-post-dialog";
+import { CreateEventDialog } from "@/components/create-event-dialog";
 import {
   Card,
   CardHeader,
@@ -53,6 +57,9 @@ export interface ManagedCommunity {
 export default function DashboardHomePage() {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = React.useState(false);
+  const [isEventDialogOpen, setIsEventDialogOpen] = React.useState(false);
+  const [targetPostSlug, setTargetPostSlug] = React.useState<string | undefined>(undefined);
 
   const {
     data: communities,
@@ -212,6 +219,30 @@ export default function DashboardHomePage() {
                 {communities.length} {communities.length === 1 ? "Community" : "Communities"} Managed
               </Badge>
               <Button
+                onClick={() => {
+                  setTargetPostSlug(communities[0]?.slug);
+                  setIsPostDialogOpen(true);
+                }}
+                size="sm"
+                variant="outline"
+                className="gap-1.5 cursor-pointer shadow-xs"
+              >
+                <MessageSquare className="size-4 text-blue-500" />
+                <span>Create Post</span>
+              </Button>
+              <Button
+                onClick={() => {
+                  setTargetPostSlug(communities[0]?.slug);
+                  setIsEventDialogOpen(true);
+                }}
+                size="sm"
+                variant="outline"
+                className="gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Calendar className="size-4 text-emerald-500" />
+                <span>Create Event</span>
+              </Button>
+              <Button
                 onClick={() => setIsCreateOpen(true)}
                 size="sm"
                 className="gap-1.5 cursor-pointer shadow-sm"
@@ -355,7 +386,7 @@ export default function DashboardHomePage() {
               You don&apos;t manage any communities yet
             </h3>
             <p className="text-xs text-muted-foreground max-w-md mt-1.5 mb-5 leading-relaxed">
-              Every community in HobbyHub starts with a creator who becomes its <strong>Owner</strong>.
+              Every community in Nexus starts with a creator who becomes its <strong>Owner</strong>.
               When you create a community or get appointed as an administrator or moderator, it will automatically appear here for you to manage.
             </p>
             <Button
@@ -373,6 +404,20 @@ export default function DashboardHomePage() {
       <CreateCommunityDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
+      />
+
+      <CreatePostDialog
+        open={isPostDialogOpen}
+        onOpenChange={setIsPostDialogOpen}
+        communities={communities || []}
+        defaultSlug={targetPostSlug}
+      />
+
+      <CreateEventDialog
+        open={isEventDialogOpen}
+        onOpenChange={setIsEventDialogOpen}
+        communities={communities || []}
+        defaultSlug={targetPostSlug}
       />
     </div>
   );

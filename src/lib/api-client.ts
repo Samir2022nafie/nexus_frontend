@@ -30,21 +30,36 @@ export interface PaginatedResult<T> {
   meta: ApiMeta;
 }
 
-const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-const baseURL = `${rawApiUrl.replace(/\/+$/, "")}/api/v1`;
+function getBaseURL(): string {
+  if (typeof window !== "undefined") {
+    // When running in local development on port 3001, connect to backend port 3000 of the same active hostname (localhost, 192.168.x.x, etc.)
+    if (window.location.port === "3001") {
+      return `${window.location.protocol}//${window.location.hostname}:3000/api/v1`;
+    }
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return `${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "")}/api/v1`;
+    }
+    return `${window.location.origin}/api/v1`;
+  }
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+  return `${rawApiUrl.replace(/\/+$/, "")}/api/v1`;
+}
 
 export const apiClient = axios.create({
-  baseURL,
+  baseURL: getBaseURL(),
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
-// Request Interceptor: Attach bearer_token from localStorage
+// Request Interceptor: Attach bearer_token from localStorage and adapt baseURL to current host
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
+      if (window.location.port === "3001") {
+        config.baseURL = `${window.location.protocol}//${window.location.hostname}:3000/api/v1`;
+      }
       const token = localStorage.getItem("bearer_token");
       if (token) {
         config.headers.set("Authorization", `Bearer ${token}`);
@@ -66,7 +81,10 @@ apiClient.interceptors.response.use(
           meta: body.meta,
         } as unknown as typeof response;
       }
-      return body.data as unknown as typeof response;
+      if ("data" in body && body.data !== undefined) {
+        return body.data as unknown as typeof response;
+      }
+      return body as unknown as typeof response;
     }
     return body;
   },

@@ -34,11 +34,13 @@ import {
   Loader2,
   Eye,
   LayoutDashboard,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiGet, apiPost } from "@/lib/api-client";
 import { getCategoryById } from "@/lib/taxonomy";
+import { CreatePostDialog } from "@/components/create-post-dialog";
 import {
   Card,
   CardHeader,
@@ -166,6 +168,7 @@ export default function CommunityOverviewPage() {
 
   // Tab or view switcher for managers: "public" (community subreddit view) vs "admin" (management metrics)
   const [viewMode, setViewMode] = React.useState<"public" | "admin">("public");
+  const [isCreatePostOpen, setIsCreatePostOpen] = React.useState(false);
 
   // 1. Fetch Public Community Details (works for anyone if public, or member if private)
   const {
@@ -1012,11 +1015,23 @@ export default function CommunityOverviewPage() {
                 <MessageSquare className="size-4 text-primary" />
                 <span>Community Posts</span>
               </h2>
-              {posts.length > 0 && (
-                <span className="text-xs text-muted-foreground font-mono">
-                  {posts.length} {posts.length === 1 ? "post" : "posts"}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {posts.length > 0 && (
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {posts.length} {posts.length === 1 ? "post" : "posts"}
+                  </span>
+                )}
+                {isManager && (
+                  <Button
+                    onClick={() => setIsCreatePostOpen(true)}
+                    size="sm"
+                    className="h-7 text-xs gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <Plus className="size-3.5" />
+                    <span>Create Post</span>
+                  </Button>
+                )}
+              </div>
             </div>
 
             {isLoadingPosts ? (
@@ -1148,6 +1163,16 @@ export default function CommunityOverviewPage() {
                 <p className="text-xs text-muted-foreground max-w-sm mt-1">
                   There haven&apos;t been any posts shared in this community yet. Check back soon for discussions and updates!
                 </p>
+                {isManager && (
+                  <Button
+                    onClick={() => setIsCreatePostOpen(true)}
+                    size="sm"
+                    className="mt-4 gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <Plus className="size-3.5" />
+                    <span>Create First Post</span>
+                  </Button>
+                )}
               </Card>
             )}
           </div>
@@ -1247,6 +1272,28 @@ export default function CommunityOverviewPage() {
           </div>
         </div>
       )}
+
+      <CreatePostDialog
+        open={isCreatePostOpen}
+        onOpenChange={setIsCreatePostOpen}
+        communities={
+          community
+            ? [
+                {
+                  id: community.id,
+                  name: community.name,
+                  slug: community.slug,
+                  role: (myRole as any) || "admin",
+                },
+              ]
+            : []
+        }
+        defaultSlug={slug}
+        onSuccess={() => {
+          refetchPosts();
+          refetchStats();
+        }}
+      />
     </div>
   );
 }

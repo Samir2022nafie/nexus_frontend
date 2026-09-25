@@ -233,7 +233,6 @@ export function CreateCommunityDialog({
             </Label>
             <Input
               id="comm-name"
-              placeholder="e.g. Addis Tech Enthusiasts"
               {...register("name")}
               disabled={isSubmitting}
               className="text-sm"

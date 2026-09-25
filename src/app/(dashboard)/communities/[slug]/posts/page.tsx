@@ -2,8 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { isAxiosError } from "axios";
 import {
   FileText,
@@ -22,10 +25,12 @@ import {
   AlertCircle,
   Image as ImageIcon,
   MessageCircle,
+  Plus,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { apiGet, apiDelete, ApiMeta } from "@/lib/api-client";
+import { apiGet, apiPost, apiDelete, ApiMeta } from "@/lib/api-client";
 import {
   Table,
   TableHeader,
@@ -56,14 +61,61 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+
+// ============================================================================
+// Form Validation Schema
+// ============================================================================
+
+const postFormSchema = z
+  .object({
+    title: z
+      .string()
+      .max(150, "Title cannot exceed 150 characters")
+      .optional()
+      .or(z.literal("")),
+    content: z
+      .string()
+      .max(10000, "Content cannot exceed 10,000 characters")
+      .optional()
+      .or(z.literal("")),
+    mediaUrl: z
+      .string()
+      .url("Please enter a valid URL (e.g. https://...)")
+      .optional()
+      .or(z.literal("")),
+    tags: z
+      .string()
+      .optional()
+      .or(z.literal("")),
+  })
+  .refine(
+    (data) =>
+      Boolean(
+        (data.title && data.title.trim().length > 0) ||
+        (data.content && data.content.trim().length > 0) ||
+        (data.mediaUrl && data.mediaUrl.trim().length > 0)
+      ),
+    {
+      message: "Please provide at least a title, content, or media URL for your post",
+      path: ["content"],
+    }
+  );
+
+type PostFormValues = z.infer<typeof postFormSchema>;
 
 // ============================================================================
 // Type Definitions
@@ -263,9 +315,10 @@ function getPostTitle(post: CommunityPost): string {
 // Main Page Component
 // ============================================================================
 
-export default function CommunityPostsPage() {
+function CommunityPostsContent() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug as string;
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
   // Active Tab: "active" | "removed"
@@ -276,6 +329,16 @@ export default function CommunityPostsPage() {
   const limit = 20;
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
+  // Create Post Dialog State
+  const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
+
+  // Automatically open create dialog if query parameter `?create=true` is present
+  React.useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateOpen(true);
+    }
+  }, [searchParams]);
+
   // Post Detail Dialog State
   const [viewingPost, setViewingPost] = React.useState<CommunityPost | null>(null);
 
@@ -285,6 +348,29 @@ export default function CommunityPostsPage() {
 
   // Track locally removed posts during this session
   const [removedPostIds, setRemovedPostIds] = React.useState<Set<string>>(new Set());
+
+  // Create Post Form Hook
+  const createForm = useForm<PostFormValues>({
+    resolver: zodResolver(postFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      mediaUrl: "",
+      tags: "",
+    },
+  });
+
+  // Reset Create Post Form when dialog opens
+  React.useEffect(() => {
+    if (isCreateOpen) {
+      createForm.reset({
+        title: "",
+        content: "",
+        mediaUrl: "",
+        tags: "",
+      });
+    }
+  }, [isCreateOpen, createForm]);
 
   // --------------------------------------------------------------------------
   // Queries
@@ -339,7 +425,52 @@ export default function CommunityPostsPage() {
   // Mutations
   // --------------------------------------------------------------------------
 
-  // Soft Delete Post Mutation
+  // 1. Create Post Mutation
+  const createPostMutation = useMutation({
+    mutationFn: (values: PostFormValues) => {
+      const rawTags = values.tags
+        ? values.tags
+            .split(",")
+            .map((t) => t.trim().toLowerCase())
+            .filter((t) => t.length > 0)
+        : [];
+      const uniqueTags = Array.from(new Set(rawTags)).slice(0, 10);
+
+      const payload = {
+        title: values.title?.trim() || undefined,
+        content: values.content?.trim() || undefined,
+        mediaUrl: values.mediaUrl?.trim() || undefined,
+        tags: uniqueTags.length > 0 ? uniqueTags : undefined,
+      };
+
+      return apiPost(`/communities/${slug}/posts`, payload);
+    },
+    onSuccess: () => {
+      toast.success("Post published successfully!");
+      setIsCreateOpen(false);
+      setActiveTab("active");
+      queryClient.invalidateQueries({ queryKey: ["communityPosts", slug] });
+      queryClient.invalidateQueries({ queryKey: ["adminCommunityStats", slug] });
+      queryClient.invalidateQueries({ queryKey: ["community", slug] });
+    },
+    onError: (err: unknown) => {
+      let message = "Failed to publish post. Please try again.";
+      if (isAxiosError(err)) {
+        const errorData = err.response?.data?.error;
+        if (errorData?.message) {
+          message = errorData.message;
+        } else if (errorData?.details && Array.isArray(errorData.details)) {
+          message = errorData.details
+            .map((d: { message?: string }) => d.message)
+            .filter(Boolean)
+            .join(", ");
+        }
+      }
+      toast.error(message);
+    },
+  });
+
+  // 2. Soft Delete Post Mutation
   const deleteMutation = useMutation({
     mutationFn: (postId: string) => apiDelete(`/posts/${postId}`),
     onSuccess: (_, postId) => {
@@ -492,6 +623,38 @@ export default function CommunityPostsPage() {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // 404 Not Found State
+  // --------------------------------------------------------------------------
+  const isNotFound =
+    isAxiosError(overviewError) && overviewError.response?.status === 404;
+
+  if (isNotFound) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 max-w-md mx-auto w-full text-center">
+        <Card className="w-full border-border bg-card shadow-md">
+          <CardHeader className="flex flex-col items-center gap-3 pt-8 pb-4">
+            <div className="size-16 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center">
+              <AlertCircle className="size-8" />
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+              Community Not Found
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              We couldn&apos;t find a community with the identifier &quot;{slug}&quot;. It may have been deleted or the link is incorrect.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex justify-center pb-6">
+            <Button render={<Link href="/" />} className="gap-2">
+              <ArrowLeft className="size-4" />
+              Back to Dashboard
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full">
 
@@ -511,12 +674,22 @@ export default function CommunityPostsPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {canManagePosts && (
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              size="sm"
+              className="shadow-sm gap-1.5 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Post</span>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetchPosts()}
             disabled={isFetchingPosts}
-            className="gap-1.5"
+            className="gap-1.5 cursor-pointer"
           >
             <RefreshCw
               className={`h-4 w-4 ${isFetchingPosts ? "animate-spin" : ""}`}
@@ -640,6 +813,16 @@ export default function CommunityPostsPage() {
                       <p className="mt-1 text-sm text-muted-foreground max-w-sm">
                         When members create posts and start discussions in this community, they will appear here.
                       </p>
+                      {canManagePosts && (
+                        <Button
+                          size="sm"
+                          onClick={() => setIsCreateOpen(true)}
+                          className="mt-4 gap-1.5 cursor-pointer"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Create First Post</span>
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
@@ -925,6 +1108,143 @@ export default function CommunityPostsPage() {
       </Dialog>
 
       {/* =====================================================================
+          Dialog: Create Post
+      ====================================================================== */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Create Community Post
+            </DialogTitle>
+            <DialogDescription>
+              Publish an update, discussion topic, or announcement to this community.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={createForm.handleSubmit((values: PostFormValues) =>
+              createPostMutation.mutate(values)
+            )}
+            className="flex flex-col gap-4 py-2"
+          >
+            {/* Title */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="create-post-title">Post Title (Optional)</Label>
+                <span className="text-[11px] text-muted-foreground">Max 150 chars</span>
+              </div>
+              <Input
+                id="create-post-title"
+                maxLength={150}
+                {...createForm.register("title")}
+              />
+              {createForm.formState.errors.title && (
+                <p className="text-xs text-destructive">
+                  {createForm.formState.errors.title.message}
+                </p>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="space-y-1.5">
+              <Label htmlFor="create-post-content">
+                Post Content <span className="text-muted-foreground text-xs font-normal">(Discussions, details, links)</span>
+              </Label>
+              <Textarea
+                id="create-post-content"
+                rows={4}
+                {...createForm.register("content")}
+              />
+              {createForm.formState.errors.content && (
+                <p className="text-xs text-destructive">
+                  {createForm.formState.errors.content.message}
+                </p>
+              )}
+            </div>
+
+            {/* Media URL */}
+            <div className="space-y-1.5">
+              <Label htmlFor="create-post-media">Media / Image URL (Optional)</Label>
+              <Input
+                id="create-post-media"
+                type="url"
+                placeholder="https://example.com/photos/banner.jpg"
+                {...createForm.register("mediaUrl")}
+              />
+              {createForm.formState.errors.mediaUrl && (
+                <p className="text-xs text-destructive">
+                  {createForm.formState.errors.mediaUrl.message}
+                </p>
+              )}
+
+              {/* Live Image Preview */}
+              {Boolean(createForm.watch("mediaUrl")?.trim()) && (
+                <div className="relative mt-2 rounded-lg border border-border overflow-hidden max-h-48 bg-muted/40 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={createForm.watch("mediaUrl")!.trim()}
+                    alt="Preview"
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => createForm.setValue("mediaUrl", "")}
+                    className="absolute top-2 right-2 size-7 p-0 rounded-full bg-background/80 hover:bg-background shadow-xs cursor-pointer"
+                    title="Remove image"
+                  >
+                    <X className="size-3.5" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="create-post-tags">Tags (Optional)</Label>
+                <span className="text-[11px] text-muted-foreground">Comma separated, max 10</span>
+              </div>
+              <Input
+                id="create-post-tags"
+                placeholder="e.g. announcement, update, general"
+                {...createForm.register("tags")}
+              />
+              {createForm.formState.errors.tags && (
+                <p className="text-xs text-destructive">
+                  {createForm.formState.errors.tags.message}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter className="mt-4 pt-4 border-t flex flex-row items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateOpen(false)}
+                disabled={createPostMutation.isPending}
+                className="cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={createPostMutation.isPending}
+                className="cursor-pointer"
+              >
+                {createPostMutation.isPending ? "Publishing..." : "Publish Post"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* =====================================================================
           Dialog 2: Remove Post Confirmation AlertDialog
       ====================================================================== */}
       <AlertDialog
@@ -963,7 +1283,7 @@ export default function CommunityPostsPage() {
                 handleConfirmRemove();
               }}
               disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700 text-white font-medium cursor-pointer"
             >
               {deleteMutation.isPending ? (
                 <>
@@ -1209,5 +1529,19 @@ function PostsTableSkeleton() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function CommunityPostsPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[50vh] w-full flex items-center justify-center">
+          <RefreshCw className="size-6 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <CommunityPostsContent />
+    </React.Suspense>
   );
 }

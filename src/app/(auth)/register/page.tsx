@@ -3,14 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { isAxiosError } from "axios";
-import { Compass, Loader2, Mail, Phone, Lock, User, Calendar } from "lucide-react";
+import { Loader2, Mail, Phone, Lock, User, Calendar, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiPost } from "@/lib/api-client";
+import { NexusLogo } from "@/components/ui/nexus-logo";
 import {
   Card,
   CardHeader,
@@ -22,6 +23,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
+
+// ─── Date Picker Helpers ─────────────────────────────────────────────────────
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function getDaysInMonth(month: number, year: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+const currentYear = new Date().getFullYear();
+const minYear = currentYear - 120;
+const maxYear = currentYear - 13;
 
 const registerSchema = z
   .object({
@@ -34,15 +51,11 @@ const registerSchema = z
         "Username can only contain letters, numbers, and underscores"
       ),
     firstName: z.string().min(1, "First name is required").trim(),
-    lastName: z.string().min(1, "Last name is required").trim(),
+    lastName: z.string().optional().or(z.literal("")),
     authMethod: z.enum(["email", "phone"]),
     email: z.string().email("Invalid email address").optional().or(z.literal("")),
     phoneNumber: z
       .string()
-      .regex(
-        /^\+?[1-9]\d{7,14}$/,
-        "Enter a valid phone number (e.g. +251911223344)"
-      )
       .optional()
       .or(z.literal("")),
     birthDate: z
@@ -109,11 +122,19 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [authMethod, setAuthMethod] = React.useState<"email" | "phone">("email");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  // Birth date picker state
+  const [birthMonth, setBirthMonth] = React.useState<number>(-1);
+  const [birthDay, setBirthDay] = React.useState<number>(-1);
+  const [birthYear, setBirthYear] = React.useState<number>(-1);
 
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -138,6 +159,19 @@ export default function RegisterPage() {
     }
   }, [router]);
 
+  // Sync birth date dropdowns → form value
+  React.useEffect(() => {
+    if (birthMonth >= 0 && birthDay > 0 && birthYear > 0) {
+      const m = String(birthMonth + 1).padStart(2, "0");
+      const d = String(birthDay).padStart(2, "0");
+      setValue("birthDate", `${birthYear}-${m}-${d}`);
+    }
+  }, [birthMonth, birthDay, birthYear, setValue]);
+
+  const daysInSelectedMonth = birthMonth >= 0 && birthYear > 0
+    ? getDaysInMonth(birthMonth, birthYear)
+    : 31;
+
   const handleMethodChange = (method: "email" | "phone") => {
     setAuthMethod(method);
     setValue("authMethod", method);
@@ -149,7 +183,7 @@ export default function RegisterPage() {
       const payload: {
         username: string;
         firstName: string;
-        lastName: string;
+        lastName?: string;
         birthDate: string;
         password: string;
         email?: string;
@@ -157,10 +191,13 @@ export default function RegisterPage() {
       } = {
         username: values.username.trim(),
         firstName: values.firstName.trim(),
-        lastName: values.lastName.trim(),
         birthDate: values.birthDate,
         password: values.password,
       };
+
+      if (values.lastName && values.lastName.trim().length > 0) {
+        payload.lastName = values.lastName.trim();
+      }
 
       if (values.authMethod === "email" && values.email) {
         payload.email = values.email.trim();
@@ -178,8 +215,15 @@ export default function RegisterPage() {
         if (response.user) {
           localStorage.setItem("auth_user", JSON.stringify(response.user));
         }
-        toast.success("Account created successfully! Welcome to HobbyHub.");
-        router.push("/");
+
+        // If registered with phone → forward to verification
+        if (values.authMethod === "phone" && values.phoneNumber) {
+          toast.success("Account created! Please verify your phone number.");
+          router.push(`/verify-phone?phone=${encodeURIComponent(values.phoneNumber.trim())}`);
+        } else {
+          toast.success("Account created successfully! Welcome to Nexus.");
+          router.push("/");
+        }
       } else {
         toast.error("Account created, but failed to retrieve session token.");
       }
@@ -219,15 +263,15 @@ export default function RegisterPage() {
 
       <Card className="w-full max-w-lg border-border/70 bg-card/95 shadow-2xl shadow-foreground/5 backdrop-blur-sm sm:rounded-2xl my-6">
         <CardHeader className="space-y-3 pb-6 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10">
-            <Compass className="size-6" />
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10 p-2.5">
+            <NexusLogo className="w-full h-full" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
               Create an Account
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              Join HobbyHub to explore, manage, and engage with communities.
+              Join Nexus to explore, manage, and engage with communities.
             </CardDescription>
           </div>
         </CardHeader>
@@ -260,7 +304,7 @@ export default function RegisterPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="lastName" className="text-sm font-medium text-foreground">
-                  Last Name
+                  Last Name <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -346,7 +390,6 @@ export default function RegisterPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="john.doe@example.com"
                     autoComplete="email"
                     disabled={isLoading}
                     className="h-10 rounded-lg border-border/80"
@@ -365,20 +408,21 @@ export default function RegisterPage() {
                 <Label htmlFor="phoneNumber" className="text-sm font-medium text-foreground">
                   Phone Number
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="phoneNumber"
-                    type="tel"
-                    placeholder="+251911223344"
-                    autoComplete="tel"
-                    disabled={isLoading}
-                    className="h-10 rounded-lg border-border/80"
-                    {...register("phoneNumber")}
-                  />
-                  <Phone className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                </div>
+                <Controller
+                  name="phoneNumber"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      id="phoneNumber"
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoading}
+                      error={!!errors.phoneNumber}
+                    />
+                  )}
+                />
                 <p className="text-[11px] text-muted-foreground">
-                  Include international country code (e.g. +251, +1).
+                  Enter your number in any format — 0911223344, 911223344, or +251911223344
                 </p>
                 {errors.phoneNumber && (
                   <p className="text-xs font-medium text-destructive">
@@ -388,23 +432,30 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Birth Date */}
+            {/* Birth Date — Specialized Selector with Done Button inside */}
             <div className="space-y-1.5">
-              <Label htmlFor="birthDate" className="text-sm font-medium text-foreground">
+              <Label htmlFor="register-birthDate" className="text-sm font-medium text-foreground">
                 Date of Birth
               </Label>
-              <div className="relative">
-                <Input
-                  id="birthDate"
-                  type="date"
-                  disabled={isLoading}
-                  className="h-10 rounded-lg border-border/80"
-                  {...register("birthDate")}
-                />
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-              </div>
+              <Controller
+                control={control}
+                name="birthDate"
+                render={({ field }) => (
+                  <DateTimePicker
+                    id="register-birthDate"
+                    value={field.value}
+                    onChange={(val) => {
+                      field.onChange(val);
+                      setValue("birthDate", val, { shouldValidate: true });
+                    }}
+                    dateOnly
+                    placeholder="Select your date of birth"
+                    disabled={isLoading}
+                  />
+                )}
+              />
               <p className="text-[11px] text-muted-foreground">
-                You must be at least 13 years old to use HobbyHub.
+                You must be at least 13 years old to use Nexus.
               </p>
               {errors.birthDate && (
                 <p className="text-xs font-medium text-destructive">
@@ -422,14 +473,20 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type="password"
-                    placeholder="••••••••"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     disabled={isLoading}
-                    className="h-10 rounded-lg border-border/80"
+                    className="h-10 pr-10 rounded-lg border-border/80 focus-visible:ring-2 focus-visible:ring-primary/30"
                     {...register("password")}
                   />
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-xs font-medium text-destructive">
@@ -445,14 +502,20 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Input
                     id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
+                    type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
                     disabled={isLoading}
-                    className="h-10 rounded-lg border-border/80"
+                    className="h-10 pr-10 rounded-lg border-border/80 focus-visible:ring-2 focus-visible:ring-primary/30"
                     {...register("confirmPassword")}
                   />
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <p className="text-xs font-medium text-destructive">

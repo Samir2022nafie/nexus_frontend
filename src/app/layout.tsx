@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HobbyHub Admin Dashboard",
-  description: "Management dashboard for HobbyHub community owners, admins, and moderators",
+  title: "Nexus Admin Dashboard",
+  description: "Management dashboard for Nexus community owners, admins, and moderators",
 };
 
 export default function RootLayout({

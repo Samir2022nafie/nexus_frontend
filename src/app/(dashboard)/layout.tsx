@@ -12,13 +12,13 @@ import {
   ShieldAlert,
   Settings,
   Building2,
-  Compass,
   Globe,
   Bell,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiGet } from "@/lib/api-client";
+import { NexusLogo } from "@/components/ui/nexus-logo";
 import {
   NotificationsDropdown,
   NotificationsResponse,
@@ -223,6 +223,10 @@ export default function DashboardLayout({
       return [{ label: "My Profile", href: "/profile", isCurrent: true }];
     }
 
+    if (pathname.startsWith("/settings")) {
+      return [{ label: "Settings", href: "/settings", isCurrent: true }];
+    }
+
     if (pathname.startsWith("/users/")) {
       return [
         { label: "Explore", href: "/explore" },
@@ -301,12 +305,12 @@ export default function DashboardLayout({
                   render={<Link href="/" />}
                   className="hover:bg-transparent active:bg-transparent"
                 >
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                    <Compass className="size-4" />
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm p-1.5">
+                    <NexusLogo className="w-full h-full" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold tracking-tight text-foreground">
-                      HobbyHub
+                      Nexus
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
                       Admin Dashboard
@@ -343,27 +347,6 @@ export default function DashboardLayout({
                     >
                       <Globe className="size-4" />
                       <span>Explore Communities</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      render={<Link href="/notifications" />}
-                      isActive={pathname.startsWith("/notifications")}
-                      tooltip="Notifications"
-                    >
-                      <Bell className="size-4" />
-                      <span className="flex-1">Notifications</span>
-                      {totalUnreadNotifications > 0 && (
-                        <Badge
-                          variant="secondary"
-                          className="ml-auto text-[10px] px-1.5 py-0 font-mono shrink-0 group-data-[collapsible=icon]:hidden"
-                        >
-                          {totalUnreadNotifications > 99
-                            ? "99+"
-                            : totalUnreadNotifications}
-                        </Badge>
-                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>

@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { isAxiosError } from "axios";
@@ -31,6 +31,7 @@ import {
   ArrowLeft,
   X,
   ShieldAlert,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -117,6 +119,8 @@ export interface CommunityEvent {
   creator_id?: string;
   isParticipant?: boolean;
   isSaved?: boolean;
+  location?: { place_name?: string; name?: string; address?: string } | string | null;
+  locationName?: string | null;
   created_at?: string;
 }
 
@@ -181,6 +185,11 @@ const eventFormSchema = z
         const num = Number(val);
         return !isNaN(num) && num > 0 && Number.isInteger(num);
       }, "Must be a positive whole number"),
+    location: z
+      .string()
+      .max(255, "Location cannot exceed 255 characters")
+      .optional()
+      .or(z.literal("")),
   })
   .refine(
     (data) => {
@@ -269,11 +278,24 @@ function formatEventDate(startStr?: string | null, endStr?: string | null): stri
   }
 }
 
-function toDatetimeLocal(isoString?: string | null): string {
-  if (!isoString) return "";
+function getDefaultDatetimeLocal(hoursOffset = 0): string {
+  const d = new Date(Date.now() + hoursOffset * 60 * 60 * 1000);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function toDatetimeLocal(isoString?: string | null, fallbackHoursOffset?: number): string {
+  if (!isoString) {
+    return fallbackHoursOffset !== undefined ? getDefaultDatetimeLocal(fallbackHoursOffset) : "";
+  }
   try {
     const d = new Date(isoString);
-    if (isNaN(d.getTime())) return "";
+    if (isNaN(d.getTime())) return fallbackHoursOffset !== undefined ? getDefaultDatetimeLocal(fallbackHoursOffset) : "";
     const pad = (n: number) => n.toString().padStart(2, "0");
     const year = d.getFullYear();
     const month = pad(d.getMonth() + 1);
@@ -282,7 +304,7 @@ function toDatetimeLocal(isoString?: string | null): string {
     const minutes = pad(d.getMinutes());
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   } catch {
-    return "";
+    return fallbackHoursOffset !== undefined ? getDefaultDatetimeLocal(fallbackHoursOffset) : "";
   }
 }
 
@@ -439,6 +461,7 @@ export default function CommunityEventsPage() {
       const payload = {
         title: values.title,
         description: values.description || undefined,
+        location: values.location?.trim() || undefined,
         coverImageUrl: values.coverImageUrl || undefined,
         startsAt: new Date(values.startsAt).toISOString(),
         endsAt: values.endsAt ? new Date(values.endsAt).toISOString() : undefined,
@@ -481,6 +504,7 @@ export default function CommunityEventsPage() {
       const payload = {
         title: values.title,
         description: values.description || undefined,
+        location: values.location?.trim() || undefined,
         coverImageUrl: values.coverImageUrl || undefined,
         startsAt: new Date(values.startsAt).toISOString(),
         endsAt: values.endsAt ? new Date(values.endsAt).toISOString() : undefined,
@@ -588,9 +612,10 @@ export default function CommunityEventsPage() {
     defaultValues: {
       title: "",
       description: "",
+      location: "",
       coverImageUrl: "",
-      startsAt: "",
-      endsAt: "",
+      startsAt: getDefaultDatetimeLocal(0),
+      endsAt: getDefaultDatetimeLocal(7),
       visibility: "public",
       maxParticipants: "",
     },
@@ -602,9 +627,10 @@ export default function CommunityEventsPage() {
       createForm.reset({
         title: "",
         description: "",
+        location: "",
         coverImageUrl: "",
-        startsAt: "",
-        endsAt: "",
+        startsAt: getDefaultDatetimeLocal(0),
+        endsAt: getDefaultDatetimeLocal(7),
         visibility: "public",
         maxParticipants: "",
       });
@@ -617,9 +643,10 @@ export default function CommunityEventsPage() {
     defaultValues: {
       title: "",
       description: "",
+      location: "",
       coverImageUrl: "",
-      startsAt: "",
-      endsAt: "",
+      startsAt: getDefaultDatetimeLocal(0),
+      endsAt: getDefaultDatetimeLocal(7),
       visibility: "public",
       maxParticipants: "",
     },
@@ -635,12 +662,18 @@ export default function CommunityEventsPage() {
           ? String(eventToEdit.max_participants)
           : "";
 
+      const loc =
+        typeof eventToEdit.location === "string"
+          ? eventToEdit.location
+          : eventToEdit.location?.place_name || eventToEdit.location?.name || eventToEdit.locationName || "";
+
       editForm.reset({
         title: eventToEdit.title,
         description: eventToEdit.description || "",
+        location: loc,
         coverImageUrl: eventToEdit.coverImageUrl || eventToEdit.cover_image_url || "",
-        startsAt: toDatetimeLocal(eventToEdit.startsAt || eventToEdit.starts_at),
-        endsAt: toDatetimeLocal(eventToEdit.endsAt || eventToEdit.ends_at),
+        startsAt: toDatetimeLocal(eventToEdit.startsAt || eventToEdit.starts_at, 0),
+        endsAt: toDatetimeLocal(eventToEdit.endsAt || eventToEdit.ends_at, 7),
         visibility: eventToEdit.visibility || "public",
         maxParticipants: maxPart,
       });
@@ -927,6 +960,16 @@ export default function CommunityEventsPage() {
                                   {event.description}
                                 </span>
                               )}
+                              {event.location ? (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate max-w-[220px]">
+                                  <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                                  <span className="truncate">
+                                    {typeof event.location === "string"
+                                      ? event.location
+                                      : event.location.place_name || event.location.name || event.location.address}
+                                  </span>
+                                </span>
+                              ) : null}
                             </div>
                           </div>
                         </TableCell>
@@ -1285,7 +1328,6 @@ export default function CommunityEventsPage() {
               </Label>
               <Input
                 id="create-title"
-                placeholder="e.g. Saturday Mountain Trail Hike"
                 {...createForm.register("title")}
               />
               {createForm.formState.errors.title && (
@@ -1300,7 +1342,6 @@ export default function CommunityEventsPage() {
               <Label htmlFor="create-description">Description</Label>
               <Textarea
                 id="create-description"
-                placeholder="Describe the activity, itinerary, packing list, meeting instructions..."
                 rows={3}
                 {...createForm.register("description")}
               />
@@ -1333,10 +1374,17 @@ export default function CommunityEventsPage() {
                 <Label htmlFor="create-startsAt">
                   Starts At <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="create-startsAt"
-                  type="datetime-local"
-                  {...createForm.register("startsAt")}
+                <Controller
+                  control={createForm.control}
+                  name="startsAt"
+                  render={({ field }) => (
+                    <DateTimePicker
+                      id="create-startsAt"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select start date and time"
+                    />
+                  )}
                 />
                 {createForm.formState.errors.startsAt && (
                   <p className="text-xs text-destructive">
@@ -1347,10 +1395,17 @@ export default function CommunityEventsPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="create-endsAt">Ends At (Optional)</Label>
-                <Input
-                  id="create-endsAt"
-                  type="datetime-local"
-                  {...createForm.register("endsAt")}
+                <Controller
+                  control={createForm.control}
+                  name="endsAt"
+                  render={({ field }) => (
+                    <DateTimePicker
+                      id="create-endsAt"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select end date and time (optional)"
+                    />
+                  )}
                 />
                 {createForm.formState.errors.endsAt && (
                   <p className="text-xs text-destructive">
@@ -1358,6 +1413,21 @@ export default function CommunityEventsPage() {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Location */}
+            <div className="space-y-1.5">
+              <Label htmlFor="create-location">Location (Venue / Address)</Label>
+              <Input
+                id="create-location"
+                placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa"
+                {...createForm.register("location")}
+              />
+              {createForm.formState.errors.location && (
+                <p className="text-xs text-destructive">
+                  {createForm.formState.errors.location.message}
+                </p>
+              )}
             </div>
 
             {/* Visibility & Max Participants */}
@@ -1502,10 +1572,17 @@ export default function CommunityEventsPage() {
                   <Label htmlFor="edit-startsAt">
                     Starts At <span className="text-destructive">*</span>
                   </Label>
-                  <Input
-                    id="edit-startsAt"
-                    type="datetime-local"
-                    {...editForm.register("startsAt")}
+                  <Controller
+                    control={editForm.control}
+                    name="startsAt"
+                    render={({ field }) => (
+                      <DateTimePicker
+                        id="edit-startsAt"
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select start date and time"
+                      />
+                    )}
                   />
                   {editForm.formState.errors.startsAt && (
                     <p className="text-xs text-destructive">
@@ -1516,10 +1593,17 @@ export default function CommunityEventsPage() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-endsAt">Ends At (Optional)</Label>
-                  <Input
-                    id="edit-endsAt"
-                    type="datetime-local"
-                    {...editForm.register("endsAt")}
+                  <Controller
+                    control={editForm.control}
+                    name="endsAt"
+                    render={({ field }) => (
+                      <DateTimePicker
+                        id="edit-endsAt"
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select end date and time (optional)"
+                      />
+                    )}
                   />
                   {editForm.formState.errors.endsAt && (
                     <p className="text-xs text-destructive">
@@ -1527,6 +1611,21 @@ export default function CommunityEventsPage() {
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-location">Location (Venue / Address)</Label>
+                <Input
+                  id="edit-location"
+                  placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa"
+                  {...editForm.register("location")}
+                />
+                {editForm.formState.errors.location && (
+                  <p className="text-xs text-destructive">
+                    {editForm.formState.errors.location.message}
+                  </p>
+                )}
               </div>
 
               {/* Visibility & Max Participants */}
@@ -1618,7 +1717,7 @@ export default function CommunityEventsPage() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              className="bg-red-600 hover:bg-red-700 text-white font-medium cursor-pointer"
               disabled={deleteEventMutation.isPending}
               onClick={() => {
                 if (eventToDelete) {

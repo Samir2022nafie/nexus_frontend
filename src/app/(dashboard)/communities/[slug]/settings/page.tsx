@@ -817,7 +817,7 @@ export default function CommunitySettingsPage() {
                   <p className="text-xs text-muted-foreground max-w-xl">
                     {watchedIsPrivate
                       ? "Only accepted members can view community posts, event rosters, and participate in hangouts. Public visitors can only view basic community info and request to join."
-                      : "Anyone on HobbyHub can view community posts, upcoming events, and participate according to open access rules."}
+                      : "Anyone on Nexus can view community posts, upcoming events, and participate according to open access rules."}
                   </p>
                 </div>
 
@@ -993,7 +993,7 @@ export default function CommunitySettingsPage() {
                   deleteConfirmationText.trim() !== community.name.trim() ||
                   deleteCommunityMutation.isPending
                 }
-                className="gap-1.5"
+                className="gap-1.5 bg-red-600 hover:bg-red-700 text-white font-medium cursor-pointer"
               >
                 {deleteCommunityMutation.isPending ? (
                   <>
