@@ -38,6 +38,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { LocationInput } from "@/components/ui/location-input";
 import { ManagedCommunity } from "@/app/(dashboard)/page";
 
 const eventFormSchema = z
@@ -49,6 +50,8 @@ const eventFormSchema = z
     startsAt: z.string().min(1, "Start date and time is required"),
     endsAt: z.string().optional().or(z.literal("")),
     location: z.string().max(255).optional(),
+    latitude: z.number().nullable().optional(),
+    longitude: z.number().nullable().optional(),
     visibility: z.enum(["public", "community", "subcommunity"]),
     maxParticipants: z.string().optional(),
   })
@@ -131,6 +134,8 @@ export function CreateEventDialog({
         startsAt: getDefaultDatetimeLocal(0),
         endsAt: getDefaultDatetimeLocal(7),
         location: "",
+        latitude: null,
+        longitude: null,
         visibility: "public",
         maxParticipants: "",
       });
@@ -146,6 +151,9 @@ export function CreateEventDialog({
         startsAt: new Date(values.startsAt).toISOString(),
         endsAt: values.endsAt ? new Date(values.endsAt).toISOString() : undefined,
         location: values.location?.trim() || undefined,
+        locationName: values.location?.trim() || undefined,
+        latitude: values.latitude ?? undefined,
+        longitude: values.longitude ?? undefined,
         visibility: values.visibility,
         maxParticipants: values.maxParticipants && Number(values.maxParticipants) > 0
           ? Number(values.maxParticipants)
@@ -312,16 +320,25 @@ export function CreateEventDialog({
 
           {/* Location */}
           <div className="space-y-1.5">
-            <Label htmlFor="event-location" className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Location (Venue / Address)</span>
-            </Label>
-            <Input id="event-location" {...form.register("location")} />
-            {form.formState.errors.location && (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.location.message}
-              </p>
-            )}
+            <Controller
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <LocationInput
+                  label="Location (Venue / Address)"
+                  value={field.value}
+                  latitude={form.watch("latitude")}
+                  longitude={form.watch("longitude")}
+                  placeholder="Enter venue or pick on map..."
+                  hint="Places this event on the 3D Explore Globe"
+                  onChangeLocation={(loc) => {
+                    field.onChange(loc.name);
+                    form.setValue("latitude", loc.latitude);
+                    form.setValue("longitude", loc.longitude);
+                  }}
+                />
+              )}
+            />
           </div>
 
           {/* Cover Image URL */}

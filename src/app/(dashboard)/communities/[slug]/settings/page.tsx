@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner";
 
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client";
+import { LocationInput } from "@/components/ui/location-input";
 
 import {
   Card,
@@ -148,6 +149,9 @@ const settingsSchema = z.object({
     .optional()
     .or(z.literal("")),
   isPrivate: z.boolean(),
+  location: z.string().optional().or(z.literal("")),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -216,12 +220,18 @@ export default function CommunitySettingsPage() {
       bannerUrl: "",
       profilePictureUrl: "",
       isPrivate: false,
+      location: "",
+      latitude: null,
+      longitude: null,
     },
   });
 
   // Populate form when data arrives or refreshes
   React.useEffect(() => {
     if (community) {
+      const loc = community.location?.place_name || "";
+      const lat = community.location?.latitude ? Number(community.location.latitude) : null;
+      const lng = community.location?.longitude ? Number(community.location.longitude) : null;
       reset({
         name: community.name || "",
         description: community.description || "",
@@ -229,6 +239,9 @@ export default function CommunitySettingsPage() {
         bannerUrl: community.banner_url || "",
         profilePictureUrl: community.profile_picture_url || "",
         isPrivate: Boolean(community.is_private),
+        location: loc,
+        latitude: lat,
+        longitude: lng,
       });
     }
   }, [community, reset]);
@@ -255,12 +268,18 @@ export default function CommunitySettingsPage() {
         bannerUrl: values.bannerUrl?.trim() || null,
         profilePictureUrl: values.profilePictureUrl?.trim() || null,
         isPrivate: values.isPrivate,
+        locationName: values.location?.trim() || null,
+        latitude: values.latitude ?? null,
+        longitude: values.longitude ?? null,
       };
       return apiPatch<CommunityDetail>(`/communities/${slug}`, payload);
     },
     onSuccess: (updatedCommunity) => {
       toast.success("Community settings updated successfully!");
       // Reset form state with fresh values to reset isDirty
+      const loc = updatedCommunity.location?.place_name || "";
+      const lat = updatedCommunity.location?.latitude ? Number(updatedCommunity.location.latitude) : null;
+      const lng = updatedCommunity.location?.longitude ? Number(updatedCommunity.location.longitude) : null;
       reset({
         name: updatedCommunity.name || "",
         description: updatedCommunity.description || "",
@@ -268,6 +287,9 @@ export default function CommunitySettingsPage() {
         bannerUrl: updatedCommunity.banner_url || "",
         profilePictureUrl: updatedCommunity.profile_picture_url || "",
         isPrivate: Boolean(updatedCommunity.is_private),
+        location: loc,
+        latitude: lat,
+        longitude: lng,
       });
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["communityAdminOverview", slug] });
@@ -601,6 +623,34 @@ export default function CommunitySettingsPage() {
                   <p className="text-[11px] text-muted-foreground">
                     Determined during initial community registration and permanently locked.
                   </p>
+                </div>
+
+                {/* Community Location */}
+                <div className="space-y-2">
+                  <Controller
+                    control={control}
+                    name="location"
+                    render={({ field }) => (
+                      <LocationInput
+                        label="Community Location (City / Region)"
+                        value={field.value}
+                        latitude={watch("latitude")}
+                        longitude={watch("longitude")}
+                        placeholder="e.g. Addis Ababa, Ethiopia or pick on map..."
+                        hint="Places this community on the 3D Explore Globe"
+                        disabled={!isOwner || isSubmitting}
+                        onChangeLocation={(loc) => {
+                          field.onChange(loc.name);
+                          reset({
+                            ...watch(),
+                            location: loc.name,
+                            latitude: loc.latitude,
+                            longitude: loc.longitude,
+                          });
+                        }}
+                      />
+                    )}
+                  />
                 </div>
             </CardContent>
           </Card>

@@ -42,6 +42,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { LocationInput } from "@/components/ui/location-input";
 
 const createCommunitySchema = z.object({
   name: z
@@ -55,6 +56,9 @@ const createCommunitySchema = z.object({
     .max(500, "Description cannot exceed 500 characters")
     .optional()
     .or(z.literal("")),
+  locationName: z.string().optional().or(z.literal("")),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   rules: z
     .string()
     .max(1000, "Rules cannot exceed 1000 characters")
@@ -121,6 +125,7 @@ export function CreateCommunityDialog({
     control,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<CreateCommunityFormValues>({
     resolver: zodResolver(createCommunitySchema),
@@ -128,6 +133,9 @@ export function CreateCommunityDialog({
       name: "",
       categoryId: SYSTEM_CATEGORIES[0]?.id || "",
       description: "",
+      locationName: "",
+      latitude: null,
+      longitude: null,
       rules: "",
       bannerUrl: "",
       profilePictureUrl: "",
@@ -154,6 +162,9 @@ export function CreateCommunityDialog({
         slug: string;
         categoryId: string;
         description?: string;
+        locationName?: string;
+        latitude?: number;
+        longitude?: number;
         rules?: string;
         bannerUrl?: string;
         profilePictureUrl?: string;
@@ -167,6 +178,15 @@ export function CreateCommunityDialog({
 
       if (values.description && values.description.trim().length > 0) {
         payload.description = values.description.trim();
+      }
+      if (values.locationName && values.locationName.trim().length > 0) {
+        payload.locationName = values.locationName.trim();
+      }
+      if (values.latitude != null) {
+        payload.latitude = values.latitude;
+      }
+      if (values.longitude != null) {
+        payload.longitude = values.longitude;
       }
       if (values.rules && values.rules.trim().length > 0) {
         payload.rules = values.rules.trim();
@@ -319,6 +339,30 @@ export function CreateCommunityDialog({
                 {errors.description.message}
               </p>
             )}
+          </div>
+
+          {/* Location */}
+          <div className="space-y-1.5">
+            <Controller
+              control={control}
+              name="locationName"
+              render={({ field }) => (
+                <LocationInput
+                  label="Community Headquarters / City"
+                  value={field.value}
+                  latitude={watch("latitude")}
+                  longitude={watch("longitude")}
+                  placeholder="Select city, campus, or landmark..."
+                  hint="Places this community on the 3D Explore Globe"
+                  disabled={isSubmitting}
+                  onChangeLocation={(loc) => {
+                    field.onChange(loc.name);
+                    setValue("latitude", loc.latitude);
+                    setValue("longitude", loc.longitude);
+                  }}
+                />
+              )}
+            />
           </div>
 
           {/* Rules */}

@@ -80,6 +80,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { LocationInput } from "@/components/ui/location-input";
 
 // ============================================================================
 // Types
@@ -190,6 +191,8 @@ const eventFormSchema = z
       .max(255, "Location cannot exceed 255 characters")
       .optional()
       .or(z.literal("")),
+    latitude: z.number().nullable().optional(),
+    longitude: z.number().nullable().optional(),
   })
   .refine(
     (data) => {
@@ -462,6 +465,9 @@ export default function CommunityEventsPage() {
         title: values.title,
         description: values.description || undefined,
         location: values.location?.trim() || undefined,
+        locationName: values.location?.trim() || undefined,
+        latitude: values.latitude ?? undefined,
+        longitude: values.longitude ?? undefined,
         coverImageUrl: values.coverImageUrl || undefined,
         startsAt: new Date(values.startsAt).toISOString(),
         endsAt: values.endsAt ? new Date(values.endsAt).toISOString() : undefined,
@@ -505,6 +511,9 @@ export default function CommunityEventsPage() {
         title: values.title,
         description: values.description || undefined,
         location: values.location?.trim() || undefined,
+        locationName: values.location?.trim() || undefined,
+        latitude: values.latitude ?? undefined,
+        longitude: values.longitude ?? undefined,
         coverImageUrl: values.coverImageUrl || undefined,
         startsAt: new Date(values.startsAt).toISOString(),
         endsAt: values.endsAt ? new Date(values.endsAt).toISOString() : undefined,
@@ -613,6 +622,8 @@ export default function CommunityEventsPage() {
       title: "",
       description: "",
       location: "",
+      latitude: null,
+      longitude: null,
       coverImageUrl: "",
       startsAt: getDefaultDatetimeLocal(0),
       endsAt: getDefaultDatetimeLocal(7),
@@ -628,6 +639,8 @@ export default function CommunityEventsPage() {
         title: "",
         description: "",
         location: "",
+        latitude: null,
+        longitude: null,
         coverImageUrl: "",
         startsAt: getDefaultDatetimeLocal(0),
         endsAt: getDefaultDatetimeLocal(7),
@@ -644,6 +657,8 @@ export default function CommunityEventsPage() {
       title: "",
       description: "",
       location: "",
+      latitude: null,
+      longitude: null,
       coverImageUrl: "",
       startsAt: getDefaultDatetimeLocal(0),
       endsAt: getDefaultDatetimeLocal(7),
@@ -667,10 +682,15 @@ export default function CommunityEventsPage() {
           ? eventToEdit.location
           : eventToEdit.location?.place_name || eventToEdit.location?.name || eventToEdit.locationName || "";
 
+      const lat = typeof eventToEdit.location === "object" ? (eventToEdit.location as any)?.latitude ?? null : null;
+      const lng = typeof eventToEdit.location === "object" ? (eventToEdit.location as any)?.longitude ?? null : null;
+
       editForm.reset({
         title: eventToEdit.title,
         description: eventToEdit.description || "",
         location: loc,
+        latitude: lat,
+        longitude: lng,
         coverImageUrl: eventToEdit.coverImageUrl || eventToEdit.cover_image_url || "",
         startsAt: toDatetimeLocal(eventToEdit.startsAt || eventToEdit.starts_at, 0),
         endsAt: toDatetimeLocal(eventToEdit.endsAt || eventToEdit.ends_at, 7),
@@ -1417,11 +1437,24 @@ export default function CommunityEventsPage() {
 
             {/* Location */}
             <div className="space-y-1.5">
-              <Label htmlFor="create-location">Location (Venue / Address)</Label>
-              <Input
-                id="create-location"
-                placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa"
-                {...createForm.register("location")}
+              <Controller
+                control={createForm.control}
+                name="location"
+                render={({ field }) => (
+                  <LocationInput
+                    label="Location (Venue / Address)"
+                    value={field.value}
+                    latitude={createForm.watch("latitude")}
+                    longitude={createForm.watch("longitude")}
+                    placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa or pick on map..."
+                    hint="Places this event on the 3D Explore Globe"
+                    onChangeLocation={(loc) => {
+                      field.onChange(loc.name);
+                      createForm.setValue("latitude", loc.latitude);
+                      createForm.setValue("longitude", loc.longitude);
+                    }}
+                  />
+                )}
               />
               {createForm.formState.errors.location && (
                 <p className="text-xs text-destructive">
@@ -1615,11 +1648,24 @@ export default function CommunityEventsPage() {
 
               {/* Location */}
               <div className="space-y-1.5">
-                <Label htmlFor="edit-location">Location (Venue / Address)</Label>
-                <Input
-                  id="edit-location"
-                  placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa"
-                  {...editForm.register("location")}
+                <Controller
+                  control={editForm.control}
+                  name="location"
+                  render={({ field }) => (
+                    <LocationInput
+                      label="Location (Venue / Address)"
+                      value={field.value}
+                      latitude={editForm.watch("latitude")}
+                      longitude={editForm.watch("longitude")}
+                      placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa or pick on map..."
+                      hint="Places this event on the 3D Explore Globe"
+                      onChangeLocation={(loc) => {
+                        field.onChange(loc.name);
+                        editForm.setValue("latitude", loc.latitude);
+                        editForm.setValue("longitude", loc.longitude);
+                      }}
+                    />
+                  )}
                 />
                 {editForm.formState.errors.location && (
                   <p className="text-xs text-destructive">

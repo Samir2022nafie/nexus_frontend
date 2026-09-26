@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { LocationInput } from "@/components/ui/location-input";
 
 // ─── Date Picker Helpers ─────────────────────────────────────────────────────
 const MONTHS = [
@@ -125,6 +126,18 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
+  // Location state
+  const [regLocation, setRegLocation] = React.useState<{
+    name: string;
+    latitude: number | null;
+    longitude: number | null;
+  }>({
+    name: "",
+    latitude: null,
+    longitude: null,
+  });
+  const [isLocationPrivate, setIsLocationPrivate] = React.useState(false);
+
   // Birth date picker state
   const [birthMonth, setBirthMonth] = React.useState<number>(-1);
   const [birthDay, setBirthDay] = React.useState<number>(-1);
@@ -188,6 +201,10 @@ export default function RegisterPage() {
         password: string;
         email?: string;
         phoneNumber?: string;
+        locationName?: string;
+        latitude?: number;
+        longitude?: number;
+        isLocationPrivate?: boolean;
       } = {
         username: values.username.trim(),
         firstName: values.firstName.trim(),
@@ -203,6 +220,13 @@ export default function RegisterPage() {
         payload.email = values.email.trim();
       } else if (values.authMethod === "phone" && values.phoneNumber) {
         payload.phoneNumber = values.phoneNumber.trim();
+      }
+
+      if (regLocation.name.trim()) {
+        payload.locationName = regLocation.name.trim();
+        if (regLocation.latitude != null) payload.latitude = regLocation.latitude;
+        if (regLocation.longitude != null) payload.longitude = regLocation.longitude;
+        payload.isLocationPrivate = isLocationPrivate;
       }
 
       const response = await apiPost<RegisterResponseData>(
@@ -462,6 +486,25 @@ export default function RegisterPage() {
                   {errors.birthDate.message}
                 </p>
               )}
+            </div>
+
+            {/* Permanent Location / City */}
+            <div className="space-y-1.5">
+              <LocationInput
+                label="Permanent City / Location (Optional)"
+                value={regLocation.name}
+                latitude={regLocation.latitude}
+                longitude={regLocation.longitude}
+                placeholder="Search your city or pick on map..."
+                hint="Your home city displayed on your profile and Explore Globe."
+                disabled={isLoading}
+                onChangeLocation={(loc) => setRegLocation(loc)}
+                showPrivacyToggle={true}
+                isPrivate={isLocationPrivate}
+                onPrivacyChange={setIsLocationPrivate}
+                privacyLabel="Keep my location private"
+                privacyHint="When enabled, your city is hidden from others."
+              />
             </div>
 
             {/* Password & Confirm Password */}

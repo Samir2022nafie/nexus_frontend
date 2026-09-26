@@ -22,6 +22,7 @@ import {
   Crown,
   Lock,
   LogOut,
+  MapPin,
   AlertTriangle,
   Trash2,
   CheckCircle2,
@@ -58,6 +59,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LocationInput } from "@/components/ui/location-input";
 
 interface UserProfileData {
   id: string;
@@ -73,6 +75,16 @@ interface UserProfileData {
   profile_picture_url?: string | null;
   trust_score?: number;
   created_at?: string;
+  location?: {
+    id?: string;
+    place_name?: string;
+    placeName?: string;
+    name?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
+  location_id?: string | null;
+  is_location_private?: boolean;
 }
 
 function validatePhoneNumberInput(raw: string): { isValid: boolean; error?: string; formatted?: string } {
@@ -576,6 +588,11 @@ export default function ProfilePage() {
     }
   };
 
+  const [locationName, setLocationName] = React.useState("");
+  const [locationLat, setLocationLat] = React.useState<number | null>(null);
+  const [locationLng, setLocationLng] = React.useState<number | null>(null);
+  const [isLocationPrivate, setIsLocationPrivate] = React.useState(false);
+
   const watchedAvatar = watch("profilePictureUrl");
 
   // Populate form defaults when user data loads
@@ -587,6 +604,10 @@ export default function ProfilePage() {
         bio: user.bio || "",
         profilePictureUrl: user.profile_picture_url || "",
       });
+      setLocationName(user.location?.place_name || user.location?.placeName || user.location?.name || "");
+      setLocationLat(user.location?.latitude ?? null);
+      setLocationLng(user.location?.longitude ?? null);
+      setIsLocationPrivate(Boolean(user.is_location_private));
     }
   }, [user, reset]);
 
@@ -598,11 +619,21 @@ export default function ProfilePage() {
         lastName?: string;
         bio?: string;
         profilePictureUrl?: string;
+        locationId?: string;
+        locationName?: string;
+        latitude?: number;
+        longitude?: number;
+        isLocationPrivate?: boolean;
       } = {
         firstName: values.firstName?.trim() || undefined,
         lastName: values.lastName?.trim() || undefined,
         bio: values.bio?.trim() || undefined,
         profilePictureUrl: values.profilePictureUrl?.trim() || undefined,
+        locationId: user?.location?.id || (user as any)?.location_id || undefined,
+        locationName: locationName.trim() || undefined,
+        latitude: locationLat ?? undefined,
+        longitude: locationLng ?? undefined,
+        isLocationPrivate: isLocationPrivate,
       };
       return apiPatch<UserProfileData>("/users/me", payload);
     },
@@ -616,6 +647,10 @@ export default function ProfilePage() {
         bio: updated.bio || "",
         profilePictureUrl: updated.profile_picture_url || "",
       });
+      setLocationName(updated.location?.place_name || updated.location?.placeName || updated.location?.name || "");
+      setLocationLat(updated.location?.latitude ?? null);
+      setLocationLng(updated.location?.longitude ?? null);
+      setIsLocationPrivate(Boolean(updated.is_location_private));
     },
     onError: (err) => {
       if (isAxiosError(err)) {
@@ -733,6 +768,22 @@ export default function ProfilePage() {
                   {user.trust_score ?? 50} / 100
                 </Badge>
               </div>
+
+              {/* Permanent City / Location Pill */}
+              {user.location && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <MapPin className="size-3.5 text-amber-500" />
+                    City
+                  </span>
+                  <Badge variant="outline" className="font-mono text-[10px] px-2 py-0 flex items-center gap-1 border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5">
+                    {user.is_location_private && <Lock className="size-2.5 text-muted-foreground" />}
+                    <span className="truncate max-w-[130px]">
+                      {user.location.place_name || user.location.placeName || user.location.name}
+                    </span>
+                  </Badge>
+                </div>
+              )}
 
               {user.email && (
                 <div className="flex items-center gap-2 text-muted-foreground truncate">
@@ -856,6 +907,29 @@ export default function ProfilePage() {
                   <p className="text-[11px] text-muted-foreground">
                     Direct link to an image (JPEG, PNG, WebP) hosted online.
                   </p>
+                </div>
+
+                {/* Permanent City / Location */}
+                <div className="space-y-1.5 pt-1">
+                  <LocationInput
+                    label="Current City / Location"
+                    value={locationName}
+                    latitude={locationLat}
+                    longitude={locationLng}
+                    placeholder="Search city, town or pick on map..."
+                    hint="Your permanent city displayed on your profile and explore globe."
+                    disabled={updateProfileMutation.isPending}
+                    onChangeLocation={(loc) => {
+                      setLocationName(loc.name);
+                      setLocationLat(loc.latitude);
+                      setLocationLng(loc.longitude);
+                    }}
+                    showPrivacyToggle={true}
+                    isPrivate={isLocationPrivate}
+                    onPrivacyChange={setIsLocationPrivate}
+                    privacyLabel="Keep my city private"
+                    privacyHint="When turned on, your city is hidden from other members on your profile and the map."
+                  />
                 </div>
 
                 <Separator />
