@@ -83,7 +83,11 @@ export function LocationInput({
   const [isMapOpen, setIsMapOpen] = useState(false)
 
   // Map Picker Modal State
-  const [modalLat, setModalLat] = useState<number>(latitude ?? 9.03) // Default Addis Ababa or 0
+  const [initialCoords, setInitialCoords] = useState<{ lat: number; lng: number }>({
+    lat: latitude ?? 9.03,
+    lng: longitude ?? 38.74,
+  })
+  const [modalLat, setModalLat] = useState<number>(latitude ?? 9.03)
   const [modalLng, setModalLng] = useState<number>(longitude ?? 38.74)
   const [modalName, setModalName] = useState(value)
   const [mapSearchText, setMapSearchText] = useState("")
@@ -192,6 +196,7 @@ export function LocationInput({
     if (disabled) return
     const lat = currentLat ?? 9.03
     const lng = currentLng ?? 38.74
+    setInitialCoords({ lat, lng })
     setModalLat(lat)
     setModalLng(lng)
     setModalName(inputText || "")
@@ -199,7 +204,19 @@ export function LocationInput({
     setIsMapOpen(true)
   }
 
-  // Listen to postMessage from Leaflet iframe
+  // Send resize to iframe map when dialog is animated in
+  useEffect(() => {
+    if (isMapOpen) {
+      const timer = setTimeout(() => {
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({ type: "MAP_RESIZE" }, "*")
+        }
+      }, 250)
+      return () => clearTimeout(timer)
+    }
+  }, [isMapOpen])
+
+  // Listen to postMessage from iframe
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (!event.data || event.data.type !== "MAP_LOCATION_PICKED") return
@@ -253,7 +270,7 @@ export function LocationInput({
         setModalLng(lng)
         setModalName(formatted)
 
-        // Notify iframe map to pan and move marker
+        // Notify iframe map to pan and move marker without reloading
         if (iframeRef.current?.contentWindow) {
           iframeRef.current.contentWindow.postMessage(
             { type: "MAP_PAN_TO", lat, lng },
@@ -280,77 +297,166 @@ export function LocationInput({
     })
   }
 
-  // Embedded Leaflet HTML with OpenStreetMap Tiles (100% Free, no keys required)
-  const leafletHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <style>
-          html, body, #map { height: 100%; width: 100%; margin: 0; padding: 0; background: #0f172a; }
-          .custom-pin {
-            background-color: #f59e0b;
-            width: 22px;
-            height: 22px;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            border: 3px solid #ffffff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-          }
-          .leaflet-tile-pane {
-            filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(110%);
-          }
-        </style>
-      </head>
-      <body>
-        <div id="map"></div>
-        <script>
-          var lat = ${modalLat};
-          var lng = ${modalLng};
-          var map = L.map('map', {
-            zoomControl: true,
-            attributionControl: false
-          }).setView([lat, lng], 13);
-
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19
-          }).addTo(map);
-
-          var marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-
-          marker.on('dragend', function (e) {
-            var position = marker.getLatLng();
-            window.parent.postMessage({
-              type: 'MAP_LOCATION_PICKED',
-              lat: position.lat,
-              lng: position.lng
-            }, '*');
-          });
-
-          map.on('click', function (e) {
-            marker.setLatLng(e.latlng);
-            window.parent.postMessage({
-              type: 'MAP_LOCATION_PICKED',
-              lat: e.latlng.lat,
-              lng: e.latlng.lng
-            }, '*');
-          });
-
-          window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'MAP_PAN_TO') {
-              var newLat = event.data.lat;
-              var newLng = event.data.lng;
-              map.setView([newLat, newLng], 14);
-              marker.setLatLng([newLat, newLng]);
+  // Stable HTML content memoized to prevent iframe reload cycles on click
+  const mapHtml = React.useMemo(() => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+          <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body, #map { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; background: #0b0f19; }
+            .leaflet-container { background: #0b0f19 !important; font-family: inherit; }
+            .leaflet-div-icon { background: transparent !important; border: none !important; }
+            .leaflet-control-zoom {
+              border: 1px solid rgba(255, 255, 255, 0.12) !important;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+              border-radius: 8px !important;
+              overflow: hidden !important;
             }
-          });
-        </script>
-      </body>
-    </html>
-  `
+            .leaflet-control-zoom a {
+              background: #141b2d !important;
+              color: #f1f5f9 !important;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+              width: 30px !important;
+              height: 30px !important;
+              line-height: 30px !important;
+            }
+            .leaflet-control-zoom a:hover {
+              background: #1e293b !important;
+              color: #e8a736 !important;
+            }
+
+            /* Cosmic Starry Atmosphere matching mobile */
+            .cosmos-bg {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: radial-gradient(ellipse at 50% 50%, #0d1538 0%, #070c20 60%, #02040a 100%);
+              z-index: 0;
+              pointer-events: none;
+            }
+
+            /* Interactive Location Pin (Nexus Gold Pin matching mobile app) */
+            .picker-pin-wrap {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              cursor: grab;
+              user-select: none;
+              -webkit-tap-highlight-color: transparent;
+            }
+            .picker-pin-wrap:active { cursor: grabbing; }
+            .picker-pin-body {
+              width: 38px;
+              height: 38px;
+              border-radius: 50% 50% 50% 0;
+              transform: rotate(-45deg);
+              background: #e8a736;
+              border: 2.5px solid #ffffff;
+              box-shadow: 0 4px 18px rgba(232, 167, 54, 0.85);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .picker-pin-inner {
+              transform: rotate(45deg);
+              width: 14px;
+              height: 14px;
+              border-radius: 50%;
+              background: #201e1c;
+            }
+            .picker-pin-shadow {
+              width: 18px;
+              height: 6px;
+              background: rgba(0, 0, 0, 0.45);
+              border-radius: 50%;
+              margin-top: 3px;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="map"></div>
+          <script>
+            var lat = ${initialCoords.lat};
+            var lng = ${initialCoords.lng};
+
+            var map = L.map('map', {
+              center: [lat, lng],
+              zoom: 14,
+              zoomControl: true,
+              attributionControl: false
+            });
+
+            // CartoDB Dark Matter Raster Tiles (High performance, zero WebGL failure risk)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+              subdomains: 'abcd',
+              maxZoom: 20,
+              detectRetina: true
+            }).addTo(map);
+
+            // Custom Gold Nexus Marker
+            var goldIcon = L.divIcon({
+              className: 'custom-gold-marker',
+              html: '<div class="picker-pin-wrap"><div class="picker-pin-body"><div class="picker-pin-inner"></div></div><div class="picker-pin-shadow"></div></div>',
+              iconSize: [38, 48],
+              iconAnchor: [19, 44]
+            });
+
+            var marker = L.marker([lat, lng], {
+              icon: goldIcon,
+              draggable: true
+            }).addTo(map);
+
+            function triggerResize() {
+              try { map.invalidateSize(); } catch(e) {}
+            }
+            triggerResize();
+            setTimeout(triggerResize, 80);
+            setTimeout(triggerResize, 250);
+            setTimeout(triggerResize, 600);
+            window.addEventListener('resize', triggerResize);
+
+            marker.on('dragend', function () {
+              var ll = marker.getLatLng();
+              window.parent.postMessage({
+                type: 'MAP_LOCATION_PICKED',
+                lat: Number(ll.lat.toFixed(6)),
+                lng: Number(ll.lng.toFixed(6))
+              }, '*');
+            });
+
+            map.on('click', function (e) {
+              marker.setLatLng(e.latlng);
+              window.parent.postMessage({
+                type: 'MAP_LOCATION_PICKED',
+                lat: Number(e.latlng.lat.toFixed(6)),
+                lng: Number(e.latlng.lng.toFixed(6))
+              }, '*');
+            });
+
+            window.addEventListener('message', function(event) {
+              if (!event.data) return;
+              if (event.data.type === 'MAP_PAN_TO') {
+                var newLat = event.data.lat;
+                var newLng = event.data.lng;
+                map.setView([newLat, newLng], 15, { animate: true });
+                marker.setLatLng([newLat, newLng]);
+              } else if (event.data.type === 'MAP_RESIZE') {
+                triggerResize();
+              }
+            });
+          </script>
+        </body>
+      </html>
+    `
+  }, [initialCoords.lat, initialCoords.lng])
 
   return (
     <div className={cn("space-y-2", className)} ref={dropdownRef}>
@@ -459,16 +565,16 @@ export function LocationInput({
 
       {/* Interactive Map Picker Modal */}
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-        <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden border-border bg-card">
-          <DialogHeader className="p-4 pb-2 border-b border-border/50">
+        <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden border-border bg-card shadow-2xl">
+          <DialogHeader className="p-3.5 pb-2.5 border-b border-border/50 shrink-0">
             <DialogTitle className="flex items-center gap-2 text-base font-bold">
-              <Globe className="h-4 w-4 text-amber-500" />
-              Interactive Location Picker (OpenStreetMap)
+              <Compass className="h-4 w-4 text-amber-500" />
+              Select Location
             </DialogTitle>
           </DialogHeader>
 
           {/* Map Top Bar: Search address */}
-          <div className="p-3 bg-muted/40 border-b border-border/50 flex gap-2">
+          <div className="p-2.5 bg-muted/40 border-b border-border/50 flex gap-2 shrink-0">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
@@ -491,41 +597,36 @@ export function LocationInput({
             </Button>
           </div>
 
-          {/* Leaflet Map Frame */}
-          <div className="relative h-[340px] w-full bg-slate-900">
+          {/* Map Frame */}
+          <div className="relative h-[290px] sm:h-[330px] w-full bg-[#02040a] shrink-0">
             <iframe
               ref={iframeRef}
-              srcDoc={leafletHtml}
-              title="OpenStreetMap Picker"
+              srcDoc={mapHtml}
+              title="Location Picker Map"
               className="w-full h-full border-none"
             />
-            <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-xs text-[10px] text-muted-foreground px-2 py-0.5 rounded shadow border border-border">
+            <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-xs text-[10px] text-muted-foreground px-2 py-0.5 rounded shadow border border-border pointer-events-none">
               Click or drag pin to position
             </div>
           </div>
 
           {/* Editable Place Name Input */}
-          <div className="p-4 space-y-2 border-t border-border/50 bg-card">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold text-muted-foreground">
-                Selected Location Name (Editable)
-              </Label>
-              <div className="relative">
-                <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-amber-500" />
-                <Input
-                  value={modalName}
-                  onChange={(e) => setModalName(e.target.value)}
-                  placeholder="Enter or customize location name..."
-                  className="pl-8 h-8 text-xs font-medium"
-                />
-              </div>
-              <p className="text-[10px] text-muted-foreground">
-                Coordinates are automatically stored and kept abstracted.
-              </p>
+          <div className="p-3 space-y-1.5 border-t border-border/50 bg-card shrink-0">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              Selected Location Name
+            </Label>
+            <div className="relative">
+              <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-amber-500" />
+              <Input
+                value={modalName}
+                onChange={(e) => setModalName(e.target.value)}
+                placeholder="Location name..."
+                className="pl-8 h-8 text-xs font-medium"
+              />
             </div>
           </div>
 
-          <DialogFooter className="p-3 bg-muted/20 border-t border-border/50 flex justify-end gap-2">
+          <DialogFooter className="p-2.5 sm:p-3 bg-muted/20 border-t border-border/50 flex justify-end gap-2 shrink-0 mt-auto">
             <Button
               type="button"
               variant="outline"
