@@ -80,6 +80,17 @@ enum notification_type {
   moderation_action
   follow
   mention
+  event_update
+  event_deleted
+  event_join
+  event_leave
+  event_ended
+  hangout_update
+  hangout_deleted
+  hangout_join
+  hangout_leave
+  hangout_ended
+  community_new_event
 }
 
 enum subscription_status {
@@ -114,6 +125,7 @@ model categories {
   created_at DateTime @default(now()) @db.Timestamptz(6)
 
   communities communities[]
+  hangouts    hangouts[]
 }
 
 model tags {
@@ -669,6 +681,7 @@ model hangouts {
   community_id     String?           @db.Uuid // nullable = standalone hangout
   subcommunity_id  String?           @db.Uuid
   location_id      String?           @db.Uuid
+  category_id      String?           @db.Uuid
   title            String            @db.VarChar(150)
   description      String?           @db.VarChar(3000)
   cover_image_url  String?           @db.Text
@@ -685,6 +698,7 @@ model hangouts {
   community    communities?    @relation(fields: [community_id], references: [id], onDelete: Cascade)
   subcommunity subcommunities? @relation(fields: [subcommunity_id], references: [id], onDelete: Cascade)
   location     locations?      @relation(fields: [location_id], references: [id], onDelete: SetNull)
+  category     categories?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
 
   allowed_communities    hangout_allowed_communities[]
   allowed_subcommunities hangout_allowed_subcommunities[]
