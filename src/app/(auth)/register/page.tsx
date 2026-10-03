@@ -287,8 +287,8 @@ export default function RegisterPage() {
 
       <Card className="w-full max-w-lg border-border/70 bg-card/95 shadow-2xl shadow-foreground/5 backdrop-blur-sm sm:rounded-2xl my-6">
         <CardHeader className="space-y-3 pb-6 text-center">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10 p-2.5">
-            <NexusLogo className="w-full h-full" />
+          <div className="mx-auto size-16 overflow-hidden rounded-2xl shadow-lg ring-4 ring-primary/10">
+            <NexusLogo className="size-full" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
@@ -376,30 +376,30 @@ export default function RegisterPage() {
             {/* Auth Method Toggle */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-foreground">Contact Method</Label>
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/70 rounded-xl border border-border/50">
+              <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-muted/80 dark:bg-muted/60 rounded-xl border border-border/80 shadow-xs">
                 <button
                   type="button"
                   onClick={() => handleMethodChange("email")}
-                  className={`flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     authMethod === "email"
-                      ? "bg-background text-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-primary text-neutral-950 shadow-sm border border-primary font-bold"
+                      : "text-foreground/75 dark:text-foreground/75 hover:text-foreground hover:bg-background/60 font-medium"
                   }`}
                 >
-                  <Mail className="size-3.5" />
-                  Email
+                  <Mail className="size-3.5 shrink-0" />
+                  <span>Email</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleMethodChange("phone")}
-                  className={`flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                     authMethod === "phone"
-                      ? "bg-background text-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-primary text-neutral-950 shadow-sm border border-primary font-bold"
+                      : "text-foreground/75 dark:text-foreground/75 hover:text-foreground hover:bg-background/60 font-medium"
                   }`}
                 >
-                  <Phone className="size-3.5" />
-                  Phone Number
+                  <Phone className="size-3.5 shrink-0" />
+                  <span>Phone Number</span>
                 </button>
               </div>
             </div>
@@ -496,7 +496,7 @@ export default function RegisterPage() {
                 latitude={regLocation.latitude}
                 longitude={regLocation.longitude}
                 placeholder="Search your city or pick on map..."
-                hint="Your home city displayed on your profile and Explore Globe."
+                hint="Your home city displayed on your profile."
                 disabled={isLoading}
                 onChangeLocation={(loc) => setRegLocation(loc)}
                 showPrivacyToggle={true}

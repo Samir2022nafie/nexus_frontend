@@ -473,6 +473,7 @@ export default function CommunityOverviewPage() {
           </Badge>
         );
       case "admin":
+      case "moderator":
         return (
           <Badge
             variant="outline"
@@ -480,16 +481,6 @@ export default function CommunityOverviewPage() {
           >
             <ShieldCheck className="size-3.5 text-blue-600 dark:text-blue-400" />
             Admin
-          </Badge>
-        );
-      case "moderator":
-        return (
-          <Badge
-            variant="outline"
-            className="gap-1.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold uppercase tracking-wider text-[11px] px-2.5 py-1 shadow-xs"
-          >
-            <Shield className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-            Moderator
           </Badge>
         );
       default:
@@ -522,14 +513,22 @@ export default function CommunityOverviewPage() {
         <CardContent className="relative px-5 sm:px-6 pb-6 pt-0">
           {/* Avatar and Action Controls */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
-            <Avatar className="size-24 sm:size-28 rounded-2xl ring-4 ring-background shadow-md border border-border bg-muted shrink-0">
-              {profilePicUrl && (
-                <AvatarImage src={profilePicUrl} alt={community.name} className="object-cover" />
-              )}
-              <AvatarFallback className="rounded-2xl bg-primary text-primary-foreground text-xl sm:text-2xl font-bold tracking-tight">
+            <div className="relative size-24 sm:size-28 rounded-2xl ring-4 ring-background shadow-md border border-border bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+              {profilePicUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={profilePicUrl}
+                  alt={community.name}
+                  className="size-full object-cover rounded-2xl relative z-10"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : null}
+              <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary text-primary-foreground text-xl sm:text-2xl font-bold tracking-tight select-none z-0">
                 {communityInitials || "HH"}
-              </AvatarFallback>
-            </Avatar>
+              </span>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-1">

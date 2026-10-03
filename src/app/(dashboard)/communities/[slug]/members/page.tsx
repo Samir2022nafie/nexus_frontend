@@ -363,6 +363,7 @@ export default function CommunityMembersPage() {
           </Badge>
         );
       case "admin":
+      case "moderator":
         return (
           <Badge
             variant="outline"
@@ -370,16 +371,6 @@ export default function CommunityMembersPage() {
           >
             <ShieldCheck className="size-3.5 text-blue-600 dark:text-blue-400" />
             Admin
-          </Badge>
-        );
-      case "moderator":
-        return (
-          <Badge
-            variant="outline"
-            className="gap-1.5 border-emerald-500/30 bg-emerald-500/15 text-[11px] font-semibold tracking-wider text-emerald-700 uppercase shadow-xs dark:text-emerald-400"
-          >
-            <Shield className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-            Moderator
           </Badge>
         );
       case "member":
@@ -564,7 +555,6 @@ export default function CommunityMembersPage() {
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="owner">Owners</SelectItem>
                     <SelectItem value="admin">Admins</SelectItem>
-                    <SelectItem value="moderator">Moderators</SelectItem>
                     <SelectItem value="member">Members</SelectItem>
                   </SelectContent>
                 </Select>
@@ -699,18 +689,20 @@ export default function CommunityMembersPage() {
                         /* Current user is owner & target is non-owner: Role Select Dropdown */
                         <div className="flex items-center gap-2">
                           <Select
-                            value={member.role}
+                            value={member.role === "moderator" ? "admin" : member.role}
                             disabled={isUpdatingRole}
                             onValueChange={(newVal) => {
-                              if (newVal && newVal !== member.role) {
+                              const effectiveCurrent =
+                                member.role === "moderator" ? "admin" : member.role;
+                              if (newVal && newVal !== effectiveCurrent) {
                                 updateRoleMutation.mutate({
                                   userId: member.userId,
-                                  newRole: newVal as "member" | "moderator" | "admin",
+                                  newRole: newVal as "member" | "admin",
                                 });
                               }
                             }}
                           >
-                            <SelectTrigger className="h-8 w-32 text-xs font-medium">
+                            <SelectTrigger className="h-8 w-28 text-xs font-medium">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -718,12 +710,6 @@ export default function CommunityMembersPage() {
                                 <div className="flex items-center gap-1.5">
                                   <User className="size-3.5 text-muted-foreground" />
                                   <span>Member</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="moderator">
-                                <div className="flex items-center gap-1.5">
-                                  <Shield className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                                  <span>Moderator</span>
                                 </div>
                               </SelectItem>
                               <SelectItem value="admin">

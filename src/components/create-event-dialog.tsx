@@ -330,7 +330,6 @@ export function CreateEventDialog({
                   latitude={form.watch("latitude")}
                   longitude={form.watch("longitude")}
                   placeholder="Enter venue or pick on map..."
-                  hint="Places this event on the 3D Explore Globe"
                   onChangeLocation={(loc) => {
                     field.onChange(loc.name);
                     form.setValue("latitude", loc.latitude);

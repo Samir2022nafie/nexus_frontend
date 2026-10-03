@@ -348,12 +348,11 @@ export function CreateCommunityDialog({
               name="locationName"
               render={({ field }) => (
                 <LocationInput
-                  label="Community Headquarters / City"
+                  label="Location"
                   value={field.value}
                   latitude={watch("latitude")}
                   longitude={watch("longitude")}
                   placeholder="Select city, campus, or landmark..."
-                  hint="Places this community on the 3D Explore Globe"
                   disabled={isSubmitting}
                   onChangeLocation={(loc) => {
                     field.onChange(loc.name);

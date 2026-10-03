@@ -917,7 +917,7 @@ export default function ProfilePage() {
                     latitude={locationLat}
                     longitude={locationLng}
                     placeholder="Search city, town or pick on map..."
-                    hint="Your permanent city displayed on your profile and explore globe."
+                    hint="Your permanent city displayed on your profile."
                     disabled={updateProfileMutation.isPending}
                     onChangeLocation={(loc) => {
                       setLocationName(loc.name);
@@ -1006,7 +1006,7 @@ export default function ProfilePage() {
                 <div>
                   <CardTitle className="text-base font-semibold">My Managed Communities</CardTitle>
                   <CardDescription className="text-xs">
-                    Communities where you serve as Owner, Admin, or Moderator.
+                    Communities where you serve as Owner or Admin.
                   </CardDescription>
                 </div>
                 {communities && communities.length > 0 && (
@@ -1055,7 +1055,9 @@ export default function ProfilePage() {
                                   Owner
                                 </span>
                               ) : (
-                                <span className="capitalize">{comm.role}</span>
+                                <span className="capitalize">
+                                  {comm.role === "moderator" ? "Admin" : comm.role}
+                                </span>
                               )}
                             </p>
                           </div>

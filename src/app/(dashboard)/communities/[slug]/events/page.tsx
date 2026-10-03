@@ -1447,7 +1447,6 @@ export default function CommunityEventsPage() {
                     latitude={createForm.watch("latitude")}
                     longitude={createForm.watch("longitude")}
                     placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa or pick on map..."
-                    hint="Places this event on the 3D Explore Globe"
                     onChangeLocation={(loc) => {
                       field.onChange(loc.name);
                       createForm.setValue("latitude", loc.latitude);
@@ -1658,7 +1657,6 @@ export default function CommunityEventsPage() {
                       latitude={editForm.watch("latitude")}
                       longitude={editForm.watch("longitude")}
                       placeholder="e.g. Millennium Hall, Bole Road, Addis Ababa or pick on map..."
-                      hint="Places this event on the 3D Explore Globe"
                       onChangeLocation={(loc) => {
                         field.onChange(loc.name);
                         editForm.setValue("latitude", loc.latitude);

@@ -160,11 +160,13 @@ function ResetPasswordContent() {
 
       <Card className="w-full max-w-md border-border/70 bg-card/95 shadow-2xl shadow-foreground/5 backdrop-blur-sm sm:rounded-2xl">
         <CardHeader className="space-y-3 pb-6 text-center">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 ring-4 ring-primary/10 p-2.5">
+          <div className="mx-auto size-16 overflow-hidden rounded-2xl shadow-lg ring-4 ring-primary/10 flex items-center justify-center">
             {isSuccess ? (
-              <CheckCircle2 className="size-7" />
+              <div className="size-full bg-primary text-primary-foreground flex items-center justify-center">
+                <CheckCircle2 className="size-8" />
+              </div>
             ) : (
-              <NexusLogo className="w-full h-full" />
+              <NexusLogo className="size-full" />
             )}
           </div>
           <div className="space-y-1">

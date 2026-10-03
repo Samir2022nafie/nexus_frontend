@@ -109,6 +109,7 @@ export default function DashboardHomePage() {
           </Badge>
         );
       case "admin":
+      case "moderator":
         return (
           <Badge
             variant="default"
@@ -116,16 +117,6 @@ export default function DashboardHomePage() {
           >
             <Shield className="size-3" />
             Admin
-          </Badge>
-        );
-      case "moderator":
-        return (
-          <Badge
-            variant="default"
-            className="gap-1 bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/30 dark:text-emerald-400 font-mono text-[10px] uppercase font-semibold shrink-0"
-          >
-            <Shield className="size-3" />
-            Moderator
           </Badge>
         );
       default:
@@ -364,11 +355,10 @@ export default function DashboardHomePage() {
                       <Button
                         render={<Link href={`/communities/${community.slug}`} />}
                         size="sm"
-                        variant="outline"
-                        className="h-8 gap-1 rounded-lg text-xs font-medium group-hover:border-primary/50 group-hover:bg-primary group-hover:text-primary-foreground transition-all cursor-pointer"
+                        className="h-8 gap-1.5 rounded-lg text-xs font-semibold bg-primary/15 dark:bg-amber-400/15 text-primary dark:text-amber-400 border border-primary/30 dark:border-amber-400/40 shadow-xs group-hover:bg-primary group-hover:text-neutral-950 dark:group-hover:bg-amber-400 dark:group-hover:text-neutral-950 group-hover:border-primary group-hover:shadow-md transition-all cursor-pointer"
                       >
                         <span>Manage</span>
-                        <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                        <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                       </Button>
                     </div>
                   </CardContent>

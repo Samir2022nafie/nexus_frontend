@@ -23,6 +23,7 @@ import {
   NotificationsDropdown,
   NotificationsResponse,
 } from "@/components/notifications-dropdown";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -297,28 +298,25 @@ export default function DashboardLayout({
       <div className="flex min-h-screen w-full bg-muted/20">
         <Sidebar collapsible="icon" className="border-r border-border">
           {/* Sidebar Header */}
-          <SidebarHeader className="border-b border-border h-14 justify-center p-2">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  size="lg"
-                  render={<Link href="/" />}
-                  className="hover:bg-transparent active:bg-transparent"
-                >
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm p-1.5">
-                    <NexusLogo className="w-full h-full" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold tracking-tight text-foreground">
-                      Nexus
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      Admin Dashboard
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+          {/* Sidebar Header */}
+          <SidebarHeader className="border-b border-border h-16 justify-center px-3 py-2">
+            <Link
+              href="/"
+              className="flex items-center gap-3 w-full h-full rounded-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Nexus Dashboard Home"
+            >
+              <div className="size-11 shrink-0 overflow-hidden rounded-xl shadow-md border border-amber-500/30 bg-[#f8b807]">
+                <NexusLogo className="size-full" />
+              </div>
+              <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
+                <span className="font-bold text-base tracking-tight text-foreground leading-none">
+                  Nexus
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground mt-1 truncate">
+                  Admin Dashboard
+                </span>
+              </div>
+            </Link>
           </SidebarHeader>
 
           {/* Sidebar Content */}
@@ -561,6 +559,9 @@ export default function DashboardLayout({
 
             {/* Header Right Actions */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Theme Toggle (Light / Dark) */}
+              <ThemeToggle />
+
               {/* Notifications Dropdown */}
               <NotificationsDropdown />
 

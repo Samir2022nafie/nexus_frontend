@@ -340,13 +340,12 @@ export default function ExploreCommunitiesPage() {
                         <Button
                           render={<Link href={`/communities/${comm.slug}`} />}
                           size="sm"
-                          variant="outline"
-                          className="h-8 gap-1 rounded-lg text-xs font-medium cursor-pointer"
+                          className="h-8 gap-1.5 rounded-lg text-xs font-semibold bg-primary/15 dark:bg-amber-400/15 text-primary dark:text-amber-400 border border-primary/30 dark:border-amber-400/40 shadow-xs group-hover:bg-primary group-hover:text-neutral-950 dark:group-hover:bg-amber-400 dark:group-hover:text-neutral-950 group-hover:border-primary group-hover:shadow-md transition-all cursor-pointer"
                         >
                           {myRole === "owner" ? (
-                            <Crown className="size-3 text-amber-500" />
+                            <Crown className="size-3 text-amber-500 shrink-0" />
                           ) : (
-                            <Shield className="size-3 text-sky-500" />
+                            <Shield className="size-3 text-sky-500 shrink-0" />
                           )}
                           <span>Manage</span>
                         </Button>

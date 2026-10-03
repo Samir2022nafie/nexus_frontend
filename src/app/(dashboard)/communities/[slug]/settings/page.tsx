@@ -632,12 +632,11 @@ export default function CommunitySettingsPage() {
                     name="location"
                     render={({ field }) => (
                       <LocationInput
-                        label="Community Location (City / Region)"
+                        label="Location"
                         value={field.value}
                         latitude={watch("latitude")}
                         longitude={watch("longitude")}
                         placeholder="e.g. Addis Ababa, Ethiopia or pick on map..."
-                        hint="Places this community on the 3D Explore Globe"
                         disabled={!isOwner || isSubmitting}
                         onChangeLocation={(loc) => {
                           field.onChange(loc.name);
@@ -677,16 +676,22 @@ export default function CommunitySettingsPage() {
                   Profile Picture URL
                 </Label>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <Avatar className="size-16 shrink-0 rounded-xl border border-border shadow-xs">
-                    <AvatarImage
-                      src={watchedProfilePictureUrl || undefined}
-                      alt={watchedName || community.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="rounded-xl bg-primary/10 text-base font-bold text-primary">
+                  <div className="relative size-16 shrink-0 rounded-xl border border-border shadow-xs overflow-hidden bg-primary/10 flex items-center justify-center">
+                    {watchedProfilePictureUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={watchedProfilePictureUrl}
+                        alt={watchedName || community.name}
+                        className="size-full object-cover rounded-xl relative z-10"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                    <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-primary/10 text-base font-bold text-primary select-none z-0">
                       {(watchedName || community.name || "C").slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                    </span>
+                  </div>
                   <div className="flex-1 space-y-1.5">
                     <Input
                       id="profilePictureUrl"
