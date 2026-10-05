@@ -27,13 +27,16 @@ import {
   ChevronRight,
   ShieldCheck,
   RefreshCw,
-  Sparkles,
-  ArrowLeft,
   X,
   ShieldAlert,
   MapPin,
+  Crop,
+  ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 
 import { apiGet, apiPost, apiPatch, apiDelete, ApiMeta } from "@/lib/api-client";
 
@@ -161,7 +164,12 @@ const eventFormSchema = z
       .or(z.literal("")),
     coverImageUrl: z
       .string()
-      .url("Please enter a valid URL (e.g. https://...)")
+      .refine(
+        (val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val),
+        {
+          message: "Please enter a valid URL or image data URI",
+        }
+      )
       .optional()
       .or(z.literal("")),
     startsAt: z
@@ -614,6 +622,17 @@ export default function CommunityEventsPage() {
   // --------------------------------------------------------------------------
   // Form Instances (React Hook Form + Zod)
   // --------------------------------------------------------------------------
+
+  // Crop Modal State
+  const [cropModal, setCropModal] = React.useState<{
+    open: boolean;
+    imageUrl: string;
+    form: "create" | "edit";
+  }>({
+    open: false,
+    imageUrl: "",
+    form: "create",
+  });
 
   // Create Event Form
   const createForm = useForm<EventFormValues>({
@@ -1377,7 +1396,7 @@ export default function CommunityEventsPage() {
               <Label htmlFor="create-cover">Cover Image URL</Label>
               <Input
                 id="create-cover"
-                type="url"
+                type="text"
                 placeholder="https://example.com/photos/banner.jpg"
                 {...createForm.register("coverImageUrl")}
               />
@@ -1385,6 +1404,49 @@ export default function CommunityEventsPage() {
                 <p className="text-xs text-destructive">
                   {createForm.formState.errors.coverImageUrl.message}
                 </p>
+              )}
+
+              {/* Live Cover Preview */}
+              {Boolean(createForm.watch("coverImageUrl")?.trim()) && (
+                <div className="relative mt-2 rounded-lg border border-border overflow-hidden max-h-48 bg-muted/40 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={createForm.watch("coverImageUrl")!.trim()}
+                    alt="Preview"
+                    className="w-full h-36 object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        setCropModal({
+                          open: true,
+                          imageUrl: createForm.watch("coverImageUrl")!.trim(),
+                          form: "create",
+                        })
+                      }
+                      className="h-7 px-2 text-xs gap-1.5 bg-background/80 hover:bg-background shadow-xs cursor-pointer"
+                    >
+                      <Crop className="size-3.5" />
+                      Crop Cover
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => createForm.setValue("coverImageUrl", "")}
+                    className="absolute top-2 right-2 size-7 p-0 rounded-full bg-background/80 hover:bg-background shadow-xs cursor-pointer"
+                    title="Remove image"
+                  >
+                    <X className="size-3.5" />
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -1587,7 +1649,7 @@ export default function CommunityEventsPage() {
                 <Label htmlFor="edit-cover">Cover Image URL</Label>
                 <Input
                   id="edit-cover"
-                  type="url"
+                  type="text"
                   placeholder="https://example.com/photos/banner.jpg"
                   {...editForm.register("coverImageUrl")}
                 />
@@ -1595,6 +1657,49 @@ export default function CommunityEventsPage() {
                   <p className="text-xs text-destructive">
                     {editForm.formState.errors.coverImageUrl.message}
                   </p>
+                )}
+
+                {/* Live Cover Preview */}
+                {Boolean(editForm.watch("coverImageUrl")?.trim()) && (
+                  <div className="relative mt-2 rounded-lg border border-border overflow-hidden max-h-48 bg-muted/40 flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={editForm.watch("coverImageUrl")!.trim()}
+                      alt="Preview"
+                      className="w-full h-36 object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          setCropModal({
+                            open: true,
+                            imageUrl: editForm.watch("coverImageUrl")!.trim(),
+                            form: "edit",
+                          })
+                        }
+                        className="h-7 px-2 text-xs gap-1.5 bg-background/80 hover:bg-background shadow-xs cursor-pointer"
+                      >
+                        <Crop className="size-3.5" />
+                        Crop Cover
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => editForm.setValue("coverImageUrl", "")}
+                      className="absolute top-2 right-2 size-7 p-0 rounded-full bg-background/80 hover:bg-background shadow-xs cursor-pointer"
+                      title="Remove image"
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -1974,6 +2079,24 @@ export default function CommunityEventsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {Boolean(cropModal.imageUrl) && (
+        <ImageCropModal
+          open={cropModal.open}
+          onOpenChange={(open: boolean) => setCropModal((prev) => ({ ...prev, open }))}
+          imageUrl={cropModal.imageUrl}
+          cropShape="wide-rectangle"
+          targetRatio={16 / 9}
+          onConfirm={(croppedUrl) => {
+            if (cropModal.form === "create") {
+              createForm.setValue("coverImageUrl", croppedUrl, { shouldDirty: true, shouldValidate: true });
+            } else {
+              editForm.setValue("coverImageUrl", croppedUrl, { shouldDirty: true, shouldValidate: true });
+            }
+            setCropModal((prev) => ({ ...prev, open: false }));
+          }}
+        />
+      )}
     </div>
   );
 }

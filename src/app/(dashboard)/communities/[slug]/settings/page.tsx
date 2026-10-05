@@ -31,11 +31,13 @@ import {
   Layers,
   Save,
   Loader2,
+  Crop,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client";
 import { LocationInput } from "@/components/ui/location-input";
+import { ImageCropModal, CropShape } from "@/components/ui/image-crop-modal";
 
 import {
   Card,
@@ -135,16 +137,16 @@ const settingsSchema = z.object({
   bannerUrl: z
     .string()
     .trim()
-    .refine((val) => !val || val === "" || /^https?:\/\/.+/i.test(val), {
-      message: "Please enter a valid URL starting with http:// or https://",
+    .refine((val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val), {
+      message: "Please enter a valid URL or image data URI",
     })
     .optional()
     .or(z.literal("")),
   profilePictureUrl: z
     .string()
     .trim()
-    .refine((val) => !val || val === "" || /^https?:\/\/.+/i.test(val), {
-      message: "Please enter a valid URL starting with http:// or https://",
+    .refine((val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val), {
+      message: "Please enter a valid URL or image data URI",
     })
     .optional()
     .or(z.literal("")),
@@ -210,6 +212,7 @@ export default function CommunitySettingsPage() {
     control,
     reset,
     watch,
+    setValue,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -253,6 +256,21 @@ export default function CommunitySettingsPage() {
   const watchedBannerUrl = watch("bannerUrl");
   const watchedProfilePictureUrl = watch("profilePictureUrl");
   const watchedIsPrivate = watch("isPrivate");
+
+  // Crop modal state
+  const [cropModal, setCropModal] = React.useState<{
+    open: boolean;
+    imageUrl: string;
+    cropShape: CropShape;
+    targetRatio: number;
+    field: "profilePictureUrl" | "bannerUrl";
+  }>({
+    open: false,
+    imageUrl: "",
+    cropShape: "circle",
+    targetRatio: 1,
+    field: "profilePictureUrl",
+  });
 
   // --------------------------------------------------------------------------
   // Mutations
@@ -703,9 +721,31 @@ export default function CommunitySettingsPage() {
                     {errors.profilePictureUrl && (
                       <p className="text-xs text-destructive">{errors.profilePictureUrl.message}</p>
                     )}
-                    <p className="text-[11px] text-muted-foreground">
-                      Direct HTTPS image link for the circular/square community avatar.
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] text-muted-foreground">
+                        Direct HTTPS image link for the circular community avatar.
+                      </p>
+                      {watchedProfilePictureUrl && isOwner && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-xs gap-1 cursor-pointer shrink-0"
+                          onClick={() =>
+                            setCropModal({
+                              open: true,
+                              imageUrl: watchedProfilePictureUrl.trim(),
+                              cropShape: "circle",
+                              targetRatio: 1,
+                              field: "profilePictureUrl",
+                            })
+                          }
+                        >
+                          <Crop className="size-3" />
+                          Crop Avatar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -733,8 +773,28 @@ export default function CommunitySettingsPage() {
 
                 {/* Live Banner Preview Box */}
                 <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/30">
-                  <div className="px-3 py-1.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase border-b border-border/30 bg-muted/40">
-                    Live Banner Preview
+                  <div className="flex items-center justify-between px-3 py-1.5 text-[10px] font-medium tracking-wider text-muted-foreground uppercase border-b border-border/30 bg-muted/40">
+                    <span>Live Banner Preview</span>
+                    {watchedBannerUrl && isOwner && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs gap-1 cursor-pointer"
+                        onClick={() =>
+                          setCropModal({
+                            open: true,
+                            imageUrl: watchedBannerUrl.trim(),
+                            cropShape: "wide-rectangle",
+                            targetRatio: 16 / 9,
+                            field: "bannerUrl",
+                          })
+                        }
+                      >
+                        <Crop className="size-3" />
+                        Crop Banner
+                      </Button>
+                    )}
                   </div>
                   <div className="relative aspect-[3/1] w-full max-h-48 overflow-hidden bg-muted flex items-center justify-center">
                     {watchedBannerUrl ? (
@@ -1065,6 +1125,20 @@ export default function CommunitySettingsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {cropModal.imageUrl && (
+          <ImageCropModal
+            open={cropModal.open}
+            onOpenChange={(open: boolean) => setCropModal((prev) => ({ ...prev, open }))}
+            imageUrl={cropModal.imageUrl}
+            cropShape={cropModal.cropShape}
+            targetRatio={cropModal.targetRatio}
+            onConfirm={(croppedUrl) => {
+              setValue(cropModal.field, croppedUrl, { shouldDirty: true, shouldValidate: true });
+              setCropModal((prev) => ({ ...prev, open: false }));
+            }}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

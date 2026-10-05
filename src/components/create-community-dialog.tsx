@@ -14,11 +14,13 @@ import {
   Sparkles,
   Lock,
   Globe,
-  Tag,
   FileText,
   ShieldAlert,
+  Crop,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { ImageCropModal, CropShape } from "@/components/ui/image-crop-modal";
 
 import { apiPost } from "@/lib/api-client";
 import { SYSTEM_CATEGORIES, getCategoryById } from "@/lib/taxonomy";
@@ -66,12 +68,16 @@ const createCommunitySchema = z.object({
     .or(z.literal("")),
   bannerUrl: z
     .string()
-    .url("Please enter a valid URL")
+    .refine((val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val), {
+      message: "Please enter a valid URL or image data URI",
+    })
     .optional()
     .or(z.literal("")),
   profilePictureUrl: z
     .string()
-    .url("Please enter a valid URL")
+    .refine((val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val), {
+      message: "Please enter a valid URL or image data URI",
+    })
     .optional()
     .or(z.literal("")),
   isPrivate: z.boolean(),
@@ -144,6 +150,22 @@ export function CreateCommunityDialog({
   });
 
   const watchIsPrivate = watch("isPrivate");
+  const watchProfilePictureUrl = watch("profilePictureUrl");
+  const watchBannerUrl = watch("bannerUrl");
+
+  const [cropModal, setCropModal] = React.useState<{
+    open: boolean;
+    imageUrl: string;
+    cropShape: CropShape;
+    targetRatio: number;
+    field: "profilePictureUrl" | "bannerUrl";
+  }>({
+    open: false,
+    imageUrl: "",
+    cropShape: "circle",
+    targetRatio: 1,
+    field: "profilePictureUrl",
+  });
 
   // Reset form when dialog opens/closes
   React.useEffect(() => {
@@ -402,6 +424,26 @@ export function CreateCommunityDialog({
                   {errors.profilePictureUrl.message}
                 </p>
               )}
+              {Boolean(watchProfilePictureUrl?.trim()) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 h-6 px-2 text-xs gap-1 cursor-pointer"
+                  onClick={() =>
+                    setCropModal({
+                      open: true,
+                      imageUrl: watchProfilePictureUrl!.trim(),
+                      cropShape: "circle",
+                      targetRatio: 1,
+                      field: "profilePictureUrl",
+                    })
+                  }
+                >
+                  <Crop className="size-3" />
+                  Crop Avatar
+                </Button>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -419,6 +461,26 @@ export function CreateCommunityDialog({
                 <p className="text-[11px] text-destructive font-medium">
                   {errors.bannerUrl.message}
                 </p>
+              )}
+              {Boolean(watchBannerUrl?.trim()) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 h-6 px-2 text-xs gap-1 cursor-pointer"
+                  onClick={() =>
+                    setCropModal({
+                      open: true,
+                      imageUrl: watchBannerUrl!.trim(),
+                      cropShape: "wide-rectangle",
+                      targetRatio: 16 / 9,
+                      field: "bannerUrl",
+                    })
+                  }
+                >
+                  <Crop className="size-3" />
+                  Crop Banner
+                </Button>
               )}
             </div>
           </div>
@@ -489,6 +551,20 @@ export function CreateCommunityDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {Boolean(cropModal.imageUrl) && (
+        <ImageCropModal
+          open={cropModal.open}
+          onOpenChange={(open: boolean) => setCropModal((prev) => ({ ...prev, open }))}
+          imageUrl={cropModal.imageUrl}
+          cropShape={cropModal.cropShape}
+          targetRatio={cropModal.targetRatio}
+          onConfirm={(croppedUrl) => {
+            setValue(cropModal.field, croppedUrl, { shouldDirty: true, shouldValidate: true });
+            setCropModal((prev) => ({ ...prev, open: false }));
+          }}
+        />
+      )}
     </Dialog>
   );
 }

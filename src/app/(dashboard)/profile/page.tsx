@@ -28,11 +28,14 @@ import {
   CheckCircle2,
   KeyRound,
   ShieldCheck,
+  ArrowRight,
+  Crop,
   Eye,
   EyeOff,
-  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 
 import { apiGet, apiPatch, apiPost, apiDelete } from "@/lib/api-client";
 import {
@@ -219,7 +222,9 @@ const profileFormSchema = z.object({
   bio: z.string().max(300, "Bio cannot exceed 300 characters").optional(),
   profilePictureUrl: z
     .string()
-    .url("Please enter a valid image URL")
+    .refine((val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val), {
+      message: "Please enter a valid image URL or data URI",
+    })
     .optional()
     .or(z.literal("")),
 });
@@ -269,6 +274,7 @@ export default function ProfilePage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -279,6 +285,9 @@ export default function ProfilePage() {
       profilePictureUrl: "",
     },
   });
+
+  const watchedAvatarUrl = watch("profilePictureUrl");
+  const [isCropModalOpen, setIsCropModalOpen] = React.useState(false);
 
   // ── Phone Modal State ──
   const [isPhoneModalOpen, setIsPhoneModalOpen] = React.useState(false);
@@ -904,9 +913,23 @@ export default function ProfilePage() {
                       {errors.profilePictureUrl.message}
                     </p>
                   )}
-                  <p className="text-[11px] text-muted-foreground">
-                    Direct link to an image (JPEG, PNG, WebP) hosted online.
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      Direct link to an image (JPEG, PNG, WebP) hosted online.
+                    </p>
+                    {Boolean(watchedAvatarUrl?.trim()) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-xs gap-1 cursor-pointer shrink-0"
+                        onClick={() => setIsCropModalOpen(true)}
+                      >
+                        <Crop className="size-3" />
+                        Crop Avatar
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Permanent City / Location */}
@@ -1859,6 +1882,20 @@ export default function ProfilePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {Boolean(watchedAvatarUrl?.trim()) && (
+        <ImageCropModal
+          open={isCropModalOpen}
+          onOpenChange={setIsCropModalOpen}
+          imageUrl={watchedAvatarUrl!.trim()}
+          cropShape="circle"
+          targetRatio={1}
+          onConfirm={(croppedUrl) => {
+            setValue("profilePictureUrl", croppedUrl, { shouldDirty: true });
+            setIsCropModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

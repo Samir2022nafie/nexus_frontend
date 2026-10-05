@@ -14,10 +14,13 @@ import {
   Users,
   Eye,
   ImageIcon,
+  Crop,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiPost, apiGet } from "@/lib/api-client";
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import {
   Dialog,
   DialogContent,
@@ -109,6 +112,7 @@ export function CreateEventDialog({
       ? propCommunities
       : fetchedCommunities || [];
 
+  const [cropModalOpen, setCropModalOpen] = React.useState(false);
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -141,6 +145,8 @@ export function CreateEventDialog({
       });
     }
   }, [open, defaultSlug, communities, form]);
+
+  const coverImageUrlValue = form.watch("coverImageUrl");
 
   const createEventMutation = useMutation({
     mutationFn: (values: EventFormValues) => {
@@ -191,7 +197,8 @@ export function CreateEventDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
@@ -352,6 +359,37 @@ export function CreateEventDialog({
                 {form.formState.errors.coverImageUrl.message}
               </p>
             )}
+
+            {/* Live Cover Preview & Crop Button */}
+            {coverImageUrlValue && coverImageUrlValue.trim().startsWith("http") && (
+              <div className="relative mt-2 rounded-lg border overflow-hidden bg-muted/30 w-full max-h-48 flex items-center justify-center group">
+                <img
+                  src={coverImageUrlValue.trim()}
+                  alt="Cover preview"
+                  className="w-full h-44 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setCropModalOpen(true)}
+                  className="absolute bottom-2 right-2 px-2.5 py-1 bg-neutral-900/85 hover:bg-neutral-900 text-amber-400 text-xs font-semibold rounded-md shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-amber-500/30"
+                  title="Crop / Adjust Cover"
+                >
+                  <Crop className="h-3.5 w-3.5" />
+                  <span>Crop / Adjust</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setValue("coverImageUrl", "")}
+                  className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-background rounded-full text-muted-foreground hover:text-foreground shadow-xs transition-colors cursor-pointer"
+                  title="Remove cover image"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Visibility Scope & Max Participants */}
@@ -420,5 +458,22 @@ export function CreateEventDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Event Cover Image Crop Modal */}
+    {coverImageUrlValue && coverImageUrlValue.trim().startsWith("http") && (
+      <ImageCropModal
+        open={cropModalOpen}
+        imageUrl={coverImageUrlValue.trim()}
+        cropShape="wide-rectangle"
+        aspectRatio={16 / 9}
+        title="Crop Event Cover"
+        onConfirm={(croppedUrl) => {
+          form.setValue("coverImageUrl", croppedUrl);
+          setCropModalOpen(false);
+        }}
+        onClose={() => setCropModalOpen(false)}
+      />
+    )}
+  </>
   );
 }

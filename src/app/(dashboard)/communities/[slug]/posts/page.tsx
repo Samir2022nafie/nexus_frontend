@@ -27,8 +27,11 @@ import {
   MessageCircle,
   Plus,
   X,
+  Crop,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 
 import { apiGet, apiPost, apiDelete, ApiMeta } from "@/lib/api-client";
 import {
@@ -94,7 +97,12 @@ const postFormSchema = z
       .or(z.literal("")),
     mediaUrl: z
       .string()
-      .url("Please enter a valid URL (e.g. https://...)")
+      .refine(
+        (val) => !val || val === "" || /^(https?:\/\/|data:image\/).+/i.test(val),
+        {
+          message: "Please enter a valid URL or image data URI",
+        }
+      )
       .optional()
       .or(z.literal("")),
     tags: z
@@ -331,6 +339,7 @@ function CommunityPostsContent() {
 
   // Create Post Dialog State
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
+  const [isCropOpen, setIsCropOpen] = React.useState<boolean>(false);
 
   // Automatically open create dialog if query parameter `?create=true` is present
   React.useEffect(() => {
@@ -1190,6 +1199,18 @@ function CommunityPostsContent() {
                       (e.currentTarget as HTMLImageElement).style.display = "none";
                     }}
                   />
+                  <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsCropOpen(true)}
+                      className="h-7 px-2 text-xs gap-1.5 bg-background/80 hover:bg-background shadow-xs cursor-pointer"
+                    >
+                      <Crop className="size-3.5" />
+                      Crop Image
+                    </Button>
+                  </div>
                   <Button
                     type="button"
                     variant="secondary"
@@ -1243,6 +1264,20 @@ function CommunityPostsContent() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {Boolean(createForm.watch("mediaUrl")?.trim()) && (
+        <ImageCropModal
+          open={isCropOpen}
+          onOpenChange={setIsCropOpen}
+          imageUrl={createForm.watch("mediaUrl")!.trim()}
+          cropShape="rectangle"
+          targetRatio={16 / 9}
+          onConfirm={(croppedUrl) => {
+            createForm.setValue("mediaUrl", croppedUrl, { shouldDirty: true, shouldValidate: true });
+            setIsCropOpen(false);
+          }}
+        />
+      )}
 
       {/* =====================================================================
           Dialog 2: Remove Post Confirmation AlertDialog

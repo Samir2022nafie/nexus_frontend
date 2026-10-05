@@ -14,10 +14,12 @@ import {
   Image as ImageIcon,
   Building2,
   X,
+  Crop,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiPost, apiGet } from "@/lib/api-client";
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +107,7 @@ export function CreatePostDialog({
       ? propCommunities
       : fetchedCommunities || [];
 
+  const [cropModalOpen, setCropModalOpen] = React.useState(false);
   const form = useForm<PostFormValues>({
     resolver: zodResolver(postFormSchema),
     defaultValues: {
@@ -179,7 +182,8 @@ export function CreatePostDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
@@ -302,6 +306,15 @@ export function CreatePostDialog({
                 />
                 <button
                   type="button"
+                  onClick={() => setCropModalOpen(true)}
+                  className="absolute bottom-2 right-2 px-2.5 py-1 bg-neutral-900/85 hover:bg-neutral-900 text-amber-400 text-xs font-semibold rounded-md shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-amber-500/30"
+                  title="Crop / Adjust Image"
+                >
+                  <Crop className="h-3.5 w-3.5" />
+                  <span>Crop / Adjust</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => form.setValue("mediaUrl", "")}
                   className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-background rounded-full text-muted-foreground hover:text-foreground shadow-xs transition-colors cursor-pointer"
                   title="Remove image"
@@ -358,5 +371,22 @@ export function CreatePostDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Post Image Crop Modal */}
+    {mediaUrlValue && mediaUrlValue.trim().startsWith("http") && (
+      <ImageCropModal
+        open={cropModalOpen}
+        imageUrl={mediaUrlValue.trim()}
+        cropShape="rectangle"
+        aspectRatio={16 / 9}
+        title="Crop Post Image"
+        onConfirm={(croppedUrl) => {
+          form.setValue("mediaUrl", croppedUrl);
+          setCropModalOpen(false);
+        }}
+        onClose={() => setCropModalOpen(false)}
+      />
+    )}
+  </>
   );
 }
