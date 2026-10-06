@@ -57,7 +57,12 @@ const postFormSchema = z
       .or(z.literal("")),
     mediaUrl: z
       .string()
-      .url("Please enter a valid URL (e.g. https://...)")
+      .refine(
+        (val) => !val || val === "" || /^(https?:\/\/|data:image\/|blob:|\/).+/i.test(val),
+        {
+          message: "Please enter a valid URL or image URI",
+        }
+      )
       .optional()
       .or(z.literal("")),
     tags: z
@@ -295,7 +300,7 @@ export function CreatePostDialog({
             )}
 
             {/* Live Media Thumbnail Preview */}
-            {mediaUrlValue && mediaUrlValue.trim().startsWith("http") && (
+            {mediaUrlValue && (mediaUrlValue.trim().startsWith("http") || mediaUrlValue.trim().startsWith("data:image/")) && (
               <div className="relative mt-2 rounded-lg border overflow-hidden bg-muted/30 w-full max-h-48 flex items-center justify-center group">
                 <CroppedImage
                   src={mediaUrlValue.trim()}
@@ -372,12 +377,11 @@ export function CreatePostDialog({
     </Dialog>
 
     {/* Post Image Crop Modal */}
-    {mediaUrlValue && mediaUrlValue.trim().startsWith("http") && (
+    {mediaUrlValue && (mediaUrlValue.trim().startsWith("http") || mediaUrlValue.trim().startsWith("data:image/")) && (
       <ImageCropModal
         open={cropModalOpen}
         imageUrl={mediaUrlValue.trim()}
         cropShape="rectangle"
-        aspectRatio={16 / 9}
         title="Crop Post Image"
         onConfirm={(croppedUrl) => {
           form.setValue("mediaUrl", croppedUrl);

@@ -1268,7 +1268,7 @@ function CommunityPostsContent() {
           onOpenChange={setIsCropOpen}
           imageUrl={createForm.watch("mediaUrl")!.trim()}
           cropShape="rectangle"
-          targetRatio={16 / 9}
+          title="Crop Post Image"
           onConfirm={(croppedUrl) => {
             createForm.setValue("mediaUrl", croppedUrl, { shouldDirty: true, shouldValidate: true });
             setIsCropOpen(false);

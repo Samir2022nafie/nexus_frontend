@@ -15,12 +15,25 @@ export function parseCropFromUrl(url?: string | null): CropInfo {
     return { cleanUrl: "", zoom: 1, panX: 0, panY: 0 };
   }
   const trimmed = url.trim();
-  const cropIdx = trimmed.indexOf("#crop=");
-  if (cropIdx === -1) {
+  let cleanUrl = trimmed;
+  let cropPart = "";
+
+  const hashIdx = trimmed.indexOf("#crop=");
+  if (hashIdx !== -1) {
+    cleanUrl = trimmed.slice(0, hashIdx);
+    cropPart = trimmed.slice(hashIdx + 6);
+  } else {
+    const queryMatch = trimmed.match(/[?&]crop=([^&#]+)/);
+    if (queryMatch) {
+      cropPart = decodeURIComponent(queryMatch[1]);
+      cleanUrl = trimmed.replace(/[?&]crop=[^&#]+/, "").replace(/\?&/, "?").replace(/\?$/, "");
+    }
+  }
+
+  if (!cropPart) {
     return { cleanUrl: trimmed, zoom: 1, panX: 0, panY: 0 };
   }
-  const cleanUrl = trimmed.slice(0, cropIdx);
-  const cropPart = trimmed.slice(cropIdx + 6);
+
   const [z, x, y, ar] = cropPart.split(",").map(Number);
   return {
     cleanUrl,
