@@ -1104,12 +1104,12 @@ export default function CommunityOverviewPage() {
                         </p>
 
                         {media && (
-                          <div className="rounded-lg overflow-hidden border border-border max-h-80 bg-muted/30">
+                          <div className="rounded-lg overflow-hidden border border-border bg-muted/30">
                             <CroppedImage
                               src={media}
                               alt="Post media"
-                              containerClassName="w-full h-full max-h-80"
-                              className="w-full h-full max-h-80 object-cover"
+                              containerClassName="w-full rounded-lg"
+                              className="w-full h-full object-cover rounded-lg"
                             />
                           </div>
                         )}

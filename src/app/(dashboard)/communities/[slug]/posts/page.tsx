@@ -988,8 +988,8 @@ function CommunityPostsContent() {
                     <CroppedImage
                       src={(viewingPost.mediaUrl || viewingPost.media_url) || ""}
                       alt={viewingPost.title || "Post media attachment"}
-                      containerClassName="max-h-80 w-full rounded-lg"
-                      className="max-h-80 w-full object-cover rounded-lg"
+                      containerClassName="w-full rounded-lg"
+                      className="w-full h-full object-cover rounded-lg"
                     />
                   </div>
                 )}
@@ -1401,28 +1401,41 @@ function PostsTable({
                   </div>
                 </TableCell>
 
-                {/* 2. Title */}
+                {/* 2. Title & Media Thumbnail */}
                 <TableCell>
-                  <div className="flex flex-col gap-1 max-w-[320px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate text-xs font-medium text-foreground">
-                        {title}
-                      </span>
-                      {hasMedia && (
-                        <Badge
-                          variant="outline"
-                          className="px-1.5 py-0 text-[10px] gap-1 font-normal border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/10 shrink-0"
-                        >
-                          <ImageIcon className="h-2.5 w-2.5" />
-                          Media
-                        </Badge>
+                  <div className="flex items-center gap-2.5 max-w-[340px]">
+                    {hasMedia && (
+                      <div className="size-10 rounded-md overflow-hidden shrink-0 border border-border bg-muted/40">
+                        <CroppedImage
+                          src={post.mediaUrl || post.media_url || ""}
+                          alt={title}
+                          containerClassName="size-10 rounded-md"
+                          className="size-10 object-cover"
+                          fallbackIconSize={16}
+                        />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-xs font-medium text-foreground">
+                          {title}
+                        </span>
+                        {hasMedia && (
+                          <Badge
+                            variant="outline"
+                            className="px-1.5 py-0 text-[10px] gap-1 font-normal border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/10 shrink-0"
+                          >
+                            <ImageIcon className="h-2.5 w-2.5" />
+                            Media
+                          </Badge>
+                        )}
+                      </div>
+                      {post.content && post.title && (
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {post.content}
+                        </p>
                       )}
                     </div>
-                    {post.content && post.title && (
-                      <p className="truncate text-[11px] text-muted-foreground">
-                        {post.content}
-                      </p>
-                    )}
                   </div>
                 </TableCell>
 

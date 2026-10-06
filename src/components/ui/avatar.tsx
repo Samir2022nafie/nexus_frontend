@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
 import { cn } from "cn"
+import { parseCropFromUrl } from "@/components/ui/cropped-image"
 
 function Avatar({
   className,
@@ -24,14 +25,26 @@ function Avatar({
   )
 }
 
-function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
+function AvatarImage({ className, src, style, ...props }: AvatarPrimitive.Image.Props) {
+  const srcString = typeof src === "string" ? src : undefined;
+  const crop = parseCropFromUrl(srcString);
+  const hasCrop = crop.zoom > 1 || crop.panX !== 0 || crop.panY !== 0;
+
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
+      src={crop.cleanUrl || src}
       className={cn(
         "aspect-square size-full rounded-full object-cover",
         className
       )}
+      style={{
+        ...style,
+        transform: hasCrop
+          ? `translate(${crop.panX}%, ${crop.panY}%) scale(${crop.zoom})`
+          : undefined,
+        transformOrigin: "center center",
+      }}
       {...props}
     />
   )
