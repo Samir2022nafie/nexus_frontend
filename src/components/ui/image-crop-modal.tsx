@@ -54,7 +54,11 @@ export function ImageCropModal({
   const boxWidth = cropShape === "circle" ? 280 : 360
   const boxHeight = Math.round(boxWidth / targetRatio)
 
-  // Reset state when opening modal with a new image
+  // Clean base URL without any previous crop hash
+  const cropIdx = imageUrl ? imageUrl.indexOf("#crop=") : -1
+  const cleanUrl = cropIdx === -1 ? imageUrl : imageUrl.slice(0, cropIdx)
+
+  // Reset or restore state when opening modal with an image
   useEffect(() => {
     if (!open || !imageUrl) {
       setImageLoaded(false)
@@ -65,8 +69,19 @@ export function ImageCropModal({
     }
 
     setImageLoaded(false)
-    setZoom(1.0)
-    setPan({ x: 0, y: 0 })
+    let initialZoom = 1.0
+    let initialPan = { x: 0, y: 0 }
+
+    if (cropIdx !== -1) {
+      const [z, x, y] = imageUrl.slice(cropIdx + 6).split(",").map(Number)
+      if (!isNaN(z) && z > 0) initialZoom = z
+      if (!isNaN(x) && !isNaN(y)) {
+        initialPan = { x: (x / 100) * boxWidth, y: (y / 100) * boxHeight }
+      }
+    }
+
+    setZoom(initialZoom)
+    setPan(initialPan)
 
     const img = new window.Image()
     img.crossOrigin = "anonymous"
@@ -75,12 +90,11 @@ export function ImageCropModal({
       setImageLoaded(true)
     }
     img.onerror = () => {
-      // Fallback size
       setNaturalSize({ width: 800, height: 800 })
       setImageLoaded(true)
     }
-    img.src = imageUrl
-  }, [open, imageUrl])
+    img.src = cleanUrl
+  }, [open, imageUrl, cleanUrl, cropIdx, boxWidth, boxHeight])
 
   // Mouse & Touch Pan handlers
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -110,75 +124,12 @@ export function ImageCropModal({
   }
 
   const handleApplyCrop = useCallback(() => {
-    if (!naturalSize || !imageUrl) return
-    setCropping(true)
-
-    try {
-      const origW = naturalSize.width
-      const origH = naturalSize.height
-
-      const baseScale = Math.max(boxWidth / origW, boxHeight / origH)
-      const totalScale = baseScale * zoom
-
-      const dispW = origW * totalScale
-      const dispH = origH * totalScale
-
-      const imgLeft = (boxWidth - dispW) / 2 + pan.x
-      const imgTop = (boxHeight - dispH) / 2 + pan.y
-
-      const originX = Math.round(Math.max(0, -imgLeft / totalScale))
-      const originY = Math.round(Math.max(0, -imgTop / totalScale))
-      const cropW = Math.round(Math.min(origW - originX, boxWidth / totalScale))
-      const cropH = Math.round(Math.min(origH - originY, boxHeight / totalScale))
-
-      const safeCropW = Math.max(10, Math.min(origW - originX, cropW))
-      const safeCropH = Math.max(10, Math.min(origH - originY, cropH))
-
-      const canvas = document.createElement("canvas")
-      const outputWidth = cropShape === "circle" ? 500 : 1200
-      const outputHeight = Math.round(outputWidth / targetRatio)
-
-      canvas.width = outputWidth
-      canvas.height = outputHeight
-      const ctx = canvas.getContext("2d")
-
-      if (!ctx) {
-        onConfirm(imageUrl)
-        return
-      }
-
-      ctx.imageSmoothingEnabled = true
-      ctx.imageSmoothingQuality = "high"
-
-      const img = new window.Image()
-      img.crossOrigin = "anonymous"
-      img.onload = () => {
-        ctx.drawImage(
-          img,
-          originX,
-          originY,
-          safeCropW,
-          safeCropH,
-          0,
-          0,
-          outputWidth,
-          outputHeight
-        )
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.92)
-        onConfirm(dataUrl)
-        setCropping(false)
-      }
-      img.onerror = () => {
-        onConfirm(imageUrl)
-        setCropping(false)
-      }
-      img.src = imageUrl
-    } catch (err) {
-      console.error("Canvas crop error:", err)
-      onConfirm(imageUrl)
-      setCropping(false)
-    }
-  }, [naturalSize, imageUrl, boxWidth, boxHeight, zoom, pan, cropShape, targetRatio, onConfirm])
+    if (!cleanUrl) return
+    const panXPercent = boxWidth > 0 ? (pan.x / boxWidth) * 100 : 0
+    const panYPercent = boxHeight > 0 ? (pan.y / boxHeight) * 100 : 0
+    const croppedUrl = `${cleanUrl}#crop=${zoom.toFixed(2)},${panXPercent.toFixed(1)},${panYPercent.toFixed(1)}`
+    onConfirm(croppedUrl)
+  }, [cleanUrl, boxWidth, boxHeight, pan, zoom, onConfirm])
 
   if (!open || !imageUrl) return null
 
@@ -248,7 +199,7 @@ export function ImageCropModal({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   ref={imageRef}
-                  src={imageUrl}
+                  src={cleanUrl}
                   alt="Crop preview"
                   className="w-full h-full object-cover pointer-events-none select-none"
                   draggable={false}
