@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 import { apiPost, apiGet } from "@/lib/api-client";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { CroppedImage } from "@/components/ui/cropped-image";
 import {
   Dialog,
   DialogContent,
@@ -296,13 +297,11 @@ export function CreatePostDialog({
             {/* Live Media Thumbnail Preview */}
             {mediaUrlValue && mediaUrlValue.trim().startsWith("http") && (
               <div className="relative mt-2 rounded-lg border overflow-hidden bg-muted/30 w-full max-h-48 flex items-center justify-center group">
-                <img
+                <CroppedImage
                   src={mediaUrlValue.trim()}
                   alt="Post preview"
+                  containerClassName="w-full h-44"
                   className="w-full h-44 object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = "none";
-                  }}
                 />
                 <button
                   type="button"

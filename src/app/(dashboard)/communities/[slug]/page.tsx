@@ -37,6 +37,7 @@ import {
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 import { apiGet, apiPost } from "@/lib/api-client";
 import { getCategoryById } from "@/lib/taxonomy";
@@ -1104,10 +1105,10 @@ export default function CommunityOverviewPage() {
 
                         {media && (
                           <div className="rounded-lg overflow-hidden border border-border max-h-80 bg-muted/30">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                            <CroppedImage
                               src={media}
                               alt="Post media"
+                              containerClassName="w-full h-full max-h-80"
                               className="w-full h-full max-h-80 object-cover"
                             />
                           </div>

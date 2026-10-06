@@ -32,6 +32,7 @@ import {
 import { toast } from "sonner";
 
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 import { apiGet, apiPost, apiDelete, ApiMeta } from "@/lib/api-client";
 import {
@@ -984,12 +985,11 @@ function CommunityPostsContent() {
                 {/* Media Preview if attached */}
                 {(viewingPost.mediaUrl || viewingPost.media_url) && (
                   <div className="overflow-hidden rounded-lg border border-border bg-black/5 dark:bg-white/5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <CroppedImage
                       src={(viewingPost.mediaUrl || viewingPost.media_url) || ""}
                       alt={viewingPost.title || "Post media attachment"}
-                      className="max-h-80 w-full object-contain rounded-lg"
-                      loading="lazy"
+                      containerClassName="max-h-80 w-full rounded-lg"
+                      className="max-h-80 w-full object-cover rounded-lg"
                     />
                   </div>
                 )}
@@ -1190,14 +1190,11 @@ function CommunityPostsContent() {
               {/* Live Image Preview */}
               {Boolean(createForm.watch("mediaUrl")?.trim()) && (
                 <div className="relative mt-2 rounded-lg border border-border overflow-hidden max-h-48 bg-muted/40 flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <CroppedImage
                     src={createForm.watch("mediaUrl")!.trim()}
                     alt="Preview"
+                    containerClassName="w-full h-48"
                     className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
                   />
                   <div className="absolute top-2 left-2 flex items-center gap-1.5">
                     <Button

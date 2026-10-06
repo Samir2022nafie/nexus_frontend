@@ -127,9 +127,10 @@ export function ImageCropModal({
     if (!cleanUrl) return
     const panXPercent = boxWidth > 0 ? (pan.x / boxWidth) * 100 : 0
     const panYPercent = boxHeight > 0 ? (pan.y / boxHeight) * 100 : 0
-    const croppedUrl = `${cleanUrl}#crop=${zoom.toFixed(2)},${panXPercent.toFixed(1)},${panYPercent.toFixed(1)}`
+    const finalRatio = targetRatio && targetRatio > 0 ? Number(targetRatio.toFixed(3)) : undefined
+    const croppedUrl = `${cleanUrl}#crop=${zoom.toFixed(2)},${panXPercent.toFixed(1)},${panYPercent.toFixed(1)}${finalRatio ? `,${finalRatio}` : ""}`
     onConfirm(croppedUrl)
-  }, [cleanUrl, boxWidth, boxHeight, pan, zoom, onConfirm])
+  }, [cleanUrl, boxWidth, boxHeight, pan, zoom, targetRatio, onConfirm])
 
   if (!open || !imageUrl) return null
 
