@@ -36,6 +36,7 @@ import {
 import { toast } from "sonner";
 
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 import { apiGet, apiPatch, apiPost, apiDelete } from "@/lib/api-client";
 import {
@@ -1057,11 +1058,11 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="relative size-9 rounded-lg overflow-hidden bg-primary/10 text-primary border border-border/80 flex items-center justify-center shrink-0 font-bold text-xs uppercase">
                             {pic ? (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img
+                              <CroppedImage
                                 src={pic}
                                 alt={comm.name}
-                                className="size-full object-cover"
+                                fill
+                                containerClassName="size-full rounded-none"
                               />
                             ) : (
                               comm.name.slice(0, 2)

@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 export interface ManagedCommunity {
   id: string;
@@ -298,14 +299,11 @@ export default function DashboardHomePage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="relative size-12 rounded-xl overflow-hidden bg-primary/10 border border-border/80 flex items-center justify-center shrink-0">
                           {profilePic ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
+                            <CroppedImage
                               src={profilePic}
                               alt={community.name}
-                              className="size-full object-cover relative z-10"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLElement).style.display = "none";
-                              }}
+                              fill
+                              containerClassName="size-full rounded-none relative z-10"
                             />
                           ) : null}
                           <span

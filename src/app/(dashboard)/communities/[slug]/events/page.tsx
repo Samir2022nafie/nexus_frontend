@@ -37,6 +37,7 @@ import {
 import { toast } from "sonner";
 
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 import { apiGet, apiPost, apiPatch, apiDelete, ApiMeta } from "@/lib/api-client";
 
@@ -980,10 +981,11 @@ export default function CommunityEventsPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             {cover ? (
-                              <img
+                              <CroppedImage
                                 src={cover}
                                 alt={event.title}
-                                className="h-11 w-11 rounded-lg object-cover border shrink-0 bg-muted"
+                                fill
+                                containerClassName="h-11 w-11 rounded-lg shrink-0 border"
                               />
                             ) : (
                               <div className="h-11 w-11 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -1206,10 +1208,11 @@ export default function CommunityEventsPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             {cover ? (
-                              <img
+                              <CroppedImage
                                 src={cover}
                                 alt={event.title}
-                                className="h-11 w-11 rounded-lg object-cover border shrink-0 bg-muted"
+                                fill
+                                containerClassName="h-11 w-11 rounded-lg shrink-0 border"
                               />
                             ) : (
                               <div className="h-11 w-11 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -1409,14 +1412,11 @@ export default function CommunityEventsPage() {
               {/* Live Cover Preview */}
               {Boolean(createForm.watch("coverImageUrl")?.trim()) && (
                 <div className="relative mt-2 rounded-lg border border-border overflow-hidden max-h-48 bg-muted/40 flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <CroppedImage
                     src={createForm.watch("coverImageUrl")!.trim()}
                     alt="Preview"
-                    className="w-full h-36 object-cover"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
+                    fill
+                    containerClassName="w-full h-36 rounded-lg"
                   />
                   <div className="absolute top-2 left-2 flex items-center gap-1.5">
                     <Button
@@ -1662,14 +1662,11 @@ export default function CommunityEventsPage() {
                 {/* Live Cover Preview */}
                 {Boolean(editForm.watch("coverImageUrl")?.trim()) && (
                   <div className="relative mt-2 rounded-lg border border-border overflow-hidden max-h-48 bg-muted/40 flex items-center justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <CroppedImage
                       src={editForm.watch("coverImageUrl")!.trim()}
                       alt="Preview"
-                      className="w-full h-36 object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                      }}
+                      fill
+                      containerClassName="w-full h-36 rounded-lg"
                     />
                     <div className="absolute top-2 left-2 flex items-center gap-1.5">
                       <Button
@@ -1902,14 +1899,15 @@ export default function CommunityEventsPage() {
               {/* Cover Image Preview if present */}
               {(proposalToView.coverImageUrl || proposalToView.cover_image_url) && (
                 <div className="w-full h-44 rounded-xl overflow-hidden border">
-                  <img
+                  <CroppedImage
                     src={
                       proposalToView.coverImageUrl ||
                       proposalToView.cover_image_url ||
                       ""
                     }
                     alt={proposalToView.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    containerClassName="w-full h-full rounded-xl"
                   />
                 </div>
               )}

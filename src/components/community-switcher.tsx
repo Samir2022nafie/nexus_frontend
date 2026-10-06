@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 export interface ManagedCommunity {
   id: string;
@@ -183,17 +184,15 @@ export function CommunitySwitcher({
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div className="relative flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary border border-border/80 overflow-hidden font-bold text-[10px] uppercase">
                       {profilePic ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
+                        <CroppedImage
                           src={profilePic}
                           alt={community.name}
-                          className="size-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLElement).style.display = "none";
-                          }}
+                          fill
+                          containerClassName="size-full rounded-none"
                         />
-                      ) : null}
-                      <span>{community.name.slice(0, 2)}</span>
+                      ) : (
+                        <span>{community.name.slice(0, 2)}</span>
+                      )}
                     </div>
 
                     <div className="flex flex-col min-w-0 flex-1">

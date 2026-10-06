@@ -48,12 +48,12 @@ export function ImageCropModal({
   const imageRef = useRef<HTMLImageElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
-  // Fixed container width
-  const boxWidth = cropShape === "circle" ? 280 : 360
+  // Generous container width on desktop
+  const boxWidth = cropShape === "circle" ? 340 : 540
 
-  // Minimum height for rectangle post crop strictly enforced at 1:1 ratio
-  const minPostHeight = boxWidth
-  const maxPostHeight = 480
+  // Minimum height for rectangle post crop strictly enforced at 1:1 ratio or 360px
+  const minPostHeight = cropShape === "rectangle" ? Math.min(boxWidth, 380) : boxWidth
+  const maxPostHeight = 560
 
   // Dynamic vertically resizable height state for post images
   const [cropHeight, setCropHeight] = useState<number>(boxWidth)
@@ -291,7 +291,7 @@ export function ImageCropModal({
       if (onOpenChange) onOpenChange(val)
       if (!val && onClose) onClose()
     }}>
-      <DialogContent className="sm:max-w-md bg-neutral-950 text-neutral-100 border-neutral-800 p-6">
+      <DialogContent className="sm:max-w-2xl bg-neutral-950 text-neutral-100 border-neutral-800 p-6">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold text-white tracking-tight">
             {resolvedTitle}

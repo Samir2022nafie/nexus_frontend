@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CroppedImage } from "@/components/ui/cropped-image";
 import {
   Select,
   SelectContent,
@@ -280,14 +281,11 @@ export default function ExploreCommunitiesPage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="relative size-12 rounded-xl overflow-hidden bg-primary/10 border border-border/80 flex items-center justify-center shrink-0 font-bold text-sm text-primary uppercase">
                           {pic ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
+                            <CroppedImage
                               src={pic}
                               alt={comm.name}
-                              className="size-full object-cover"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLElement).style.display = "none";
-                              }}
+                              fill
+                              containerClassName="size-full rounded-none"
                             />
                           ) : (
                             comm.name.slice(0, 2)

@@ -498,11 +498,12 @@ export default function CommunityOverviewPage() {
         {/* Banner Area */}
         <div className="relative h-32 sm:h-44 w-full bg-gradient-to-r from-primary/20 via-primary/10 to-muted border-b border-border/50">
           {bannerUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
+            <CroppedImage
               src={bannerUrl}
               alt={`${community.name} banner`}
-              className="w-full h-full object-cover"
+              fill
+              containerClassName="size-full rounded-none"
+              className="size-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-end pr-8 opacity-20 select-none">
@@ -516,14 +517,12 @@ export default function CommunityOverviewPage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
             <div className="relative size-24 sm:size-28 rounded-2xl ring-4 ring-background shadow-md border border-border bg-muted shrink-0 overflow-hidden flex items-center justify-center">
               {profilePicUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
+                <CroppedImage
                   src={profilePicUrl}
                   alt={community.name}
-                  className="size-full object-cover rounded-2xl relative z-10"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = "none";
-                  }}
+                  fill
+                  containerClassName="size-full rounded-2xl relative z-10"
+                  className="size-full object-cover rounded-2xl"
                 />
               ) : null}
               <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary text-primary-foreground text-xl sm:text-2xl font-bold tracking-tight select-none z-0">

@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client";
 import { LocationInput } from "@/components/ui/location-input";
 import { ImageCropModal, CropShape } from "@/components/ui/image-crop-modal";
+import { CroppedImage } from "@/components/ui/cropped-image";
 
 import {
   Card,
@@ -696,14 +697,11 @@ export default function CommunitySettingsPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <div className="relative size-16 shrink-0 rounded-xl border border-border shadow-xs overflow-hidden bg-primary/10 flex items-center justify-center">
                     {watchedProfilePictureUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
+                      <CroppedImage
                         src={watchedProfilePictureUrl}
                         alt={watchedName || community.name}
-                        className="size-full object-cover rounded-xl relative z-10"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLElement).style.display = "none";
-                        }}
+                        fill
+                        containerClassName="size-full rounded-xl relative z-10"
                       />
                     ) : null}
                     <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-primary/10 text-base font-bold text-primary select-none z-0">
@@ -798,15 +796,11 @@ export default function CommunitySettingsPage() {
                   </div>
                   <div className="relative aspect-[3/1] w-full max-h-48 overflow-hidden bg-muted flex items-center justify-center">
                     {watchedBannerUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <CroppedImage
                         src={watchedBannerUrl}
                         alt="Banner Preview"
-                        className="h-full w-full object-cover transition-opacity duration-200"
-                        onError={(e) => {
-                          // Fallback styling if URL fails to load
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
+                        fill
+                        containerClassName="h-full w-full rounded-none"
                       />
                     ) : (
                       <div className="flex flex-col items-center gap-1 text-muted-foreground/60">

@@ -101,15 +101,19 @@ export function extractDirectImageUrl(rawUrl?: string | null): string {
 export interface CroppedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src?: string;
   alt?: string;
+  fill?: boolean;
   containerClassName?: string;
+  containerStyle?: React.CSSProperties;
   fallbackIconSize?: number;
 }
 
 export const CroppedImage: React.FC<CroppedImageProps> = ({
   src,
   alt = "",
+  fill = false,
   className = "",
   containerClassName = "",
+  containerStyle,
   fallbackIconSize = 24,
   style,
   ...props
@@ -126,11 +130,13 @@ export const CroppedImage: React.FC<CroppedImageProps> = ({
     <div
       className={cn(
         "relative overflow-hidden w-full bg-muted/20 flex items-center justify-center rounded-lg",
+        fill && "h-full",
         containerClassName
       )}
       style={{
-        aspectRatio: `${effectiveRatio}`,
-        maxHeight: "480px",
+        aspectRatio: fill ? undefined : `${effectiveRatio}`,
+        maxHeight: fill ? undefined : "480px",
+        ...containerStyle,
       }}
     >
       {hasError ? (
