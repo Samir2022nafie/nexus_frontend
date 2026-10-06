@@ -1241,9 +1241,7 @@ export default function CommunityEventsPage() {
                                 src={creator?.profile_picture_url || undefined}
                                 alt={creatorName}
                               />
-                              <AvatarFallback className="text-xs bg-muted font-medium">
-                                {initials}
-                              </AvatarFallback>
+                              <AvatarFallback className="text-xs bg-muted font-medium" />
                             </Avatar>
                             <div className="flex flex-col">
                               <span className="text-sm font-medium text-foreground leading-none">
@@ -1939,9 +1937,7 @@ export default function CommunityEventsPage() {
                     src={proposalToView.creator?.profile_picture_url || undefined}
                     alt={getCreatorName(proposalToView.creator)}
                   />
-                  <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                    {getCreatorInitials(proposalToView.creator)}
-                  </AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary font-medium" />
                 </Avatar>
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-foreground">

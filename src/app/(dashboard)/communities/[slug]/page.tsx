@@ -506,8 +506,8 @@ export default function CommunityOverviewPage() {
               className="size-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-end pr-8 opacity-20 select-none">
-              <Sparkles className="size-24 text-primary" />
+            <div className="w-full h-full flex items-center justify-center bg-muted/40 select-none">
+              <Users className="size-16 text-muted-foreground/30" />
             </div>
           )}
         </div>
@@ -525,8 +525,8 @@ export default function CommunityOverviewPage() {
                   className="size-full object-cover rounded-2xl"
                 />
               ) : null}
-              <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary text-primary-foreground text-xl sm:text-2xl font-bold tracking-tight select-none z-0">
-                {communityInitials || "HH"}
+              <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-muted text-muted-foreground z-0">
+                <Users className="size-10 sm:size-12 text-muted-foreground" />
               </span>
             </div>
 
@@ -1069,9 +1069,7 @@ export default function CommunityOverviewPage() {
                                   className="object-cover"
                                 />
                               )}
-                              <AvatarFallback className="text-xs font-semibold">
-                                {authorInitial}
-                              </AvatarFallback>
+                              <AvatarFallback className="text-xs font-semibold" />
                             </Avatar>
                             <div>
                               <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">

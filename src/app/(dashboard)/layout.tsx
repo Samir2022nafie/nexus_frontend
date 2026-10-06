@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Users,
+  User,
   MessageSquare,
   Calendar,
   ShieldAlert,
@@ -585,7 +586,7 @@ export default function DashboardLayout({
                         alt={user.name || user.username}
                       />
                     )}
-                    <AvatarFallback>{userInitials}</AvatarFallback>
+                    <AvatarFallback><User className="size-3.5 text-muted-foreground" /></AvatarFallback>
                   </Avatar>
                 </Link>
               )}

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
+import { User, Users } from "lucide-react"
 import { cn } from "cn"
 import { parseCropFromUrl } from "@/components/ui/cropped-image"
 
@@ -57,8 +58,11 @@ function AvatarImage({ className, src, style, ...props }: AvatarPrimitive.Image.
 
 function AvatarFallback({
   className,
+  children,
+  type = "user",
   ...props
-}: AvatarPrimitive.Fallback.Props) {
+}: AvatarPrimitive.Fallback.Props & { type?: "user" | "community" }) {
+  const Icon = type === "community" ? Users : User;
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
@@ -67,7 +71,9 @@ function AvatarFallback({
         className
       )}
       {...props}
-    />
+    >
+      {children || <Icon className="size-1/2 text-muted-foreground" />}
+    </AvatarPrimitive.Fallback>
   )
 }
 

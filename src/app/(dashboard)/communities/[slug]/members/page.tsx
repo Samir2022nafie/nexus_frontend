@@ -653,9 +653,7 @@ export default function CommunityMembersPage() {
                               alt={displayName}
                             />
                           ) : null}
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                            {initials}
-                          </AvatarFallback>
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold" />
                         </Avatar>
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-1.5">

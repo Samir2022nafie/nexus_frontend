@@ -939,9 +939,7 @@ function CommunityPostsContent() {
                         src={viewingPost.author?.profile_picture_url || undefined}
                         alt={getAuthorDisplayName(viewingPost.author)}
                       />
-                      <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
-                        {getAuthorInitials(viewingPost.author)}
-                      </AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs" />
                     </Avatar>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-foreground">
@@ -1057,9 +1055,7 @@ function CommunityPostsContent() {
                             <AvatarImage
                               src={comment.author?.profile_picture_url || undefined}
                             />
-                            <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                              {comment.author?.username?.slice(0, 2).toUpperCase() || "U"}
-                            </AvatarFallback>
+                            <AvatarFallback className="text-[10px] bg-muted text-muted-foreground" />
                           </Avatar>
                           <div className="flex flex-col gap-1 overflow-hidden w-full">
                             <div className="flex items-center justify-between gap-2">
