@@ -185,8 +185,8 @@ export default function ExploreCommunitiesPage() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <Compass className="size-7 text-primary" />
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Compass className="size-6 sm:size-7 text-primary" />
             <span>Explore Communities</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -279,7 +279,7 @@ export default function ExploreCommunitiesPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative size-12 rounded-xl overflow-hidden bg-primary/10 border border-border/80 flex items-center justify-center shrink-0 font-bold text-sm text-primary uppercase">
+                        <div className="relative size-12 rounded-xl overflow-hidden bg-primary/10 border border-border/80 flex items-center justify-center shrink-0 font-bold text-sm text-primary uppercase isolate">
                           {pic ? (
                             <CroppedImage
                               src={pic}

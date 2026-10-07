@@ -129,7 +129,7 @@ export const CroppedImage: React.FC<CroppedImageProps> = ({
   return (
     <div
       className={cn(
-        "relative overflow-hidden w-full bg-muted/20 flex items-center justify-center rounded-lg",
+        "relative overflow-hidden w-full bg-muted/20 flex items-center justify-center rounded-lg isolate",
         fill && "h-full",
         containerClassName
       )}

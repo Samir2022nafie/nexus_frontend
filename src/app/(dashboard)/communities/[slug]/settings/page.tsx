@@ -695,7 +695,7 @@ export default function CommunitySettingsPage() {
                   Profile Picture URL
                 </Label>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <div className="relative size-16 shrink-0 rounded-xl border border-border shadow-xs overflow-hidden bg-primary/10 flex items-center justify-center">
+                  <div className="relative size-16 shrink-0 rounded-xl border border-border shadow-xs overflow-hidden bg-primary/10 flex items-center justify-center isolate">
                     {watchedProfilePictureUrl ? (
                       <CroppedImage
                         src={watchedProfilePictureUrl}

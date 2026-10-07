@@ -296,7 +296,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-muted/20">
+      <div className="flex min-h-screen w-full min-w-0 max-w-full overflow-x-hidden bg-muted/20">
         <Sidebar collapsible="icon" className="border-r border-border">
           {/* Sidebar Header */}
           {/* Sidebar Header */}
@@ -509,12 +509,12 @@ export default function DashboardLayout({
         </Sidebar>
 
         {/* Main Inset Area */}
-        <SidebarInset className="flex min-h-screen flex-1 flex-col bg-background">
+        <SidebarInset className="flex min-h-screen min-w-0 max-w-full overflow-x-hidden flex-1 flex-col bg-background">
           {/* Top Header */}
-          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-md">
-            <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+          <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/95 px-3 sm:px-4 backdrop-blur-md">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 mr-2">
               <SidebarTrigger className="-ml-1 shrink-0" />
-              <Separator orientation="vertical" className="mr-2 h-4 shrink-0" />
+              <Separator orientation="vertical" className="mr-1 sm:mr-2 h-4 shrink-0" />
 
               <Breadcrumb className="overflow-hidden flex">
                 <BreadcrumbList className="flex-nowrap">
@@ -559,7 +559,7 @@ export default function DashboardLayout({
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {/* Theme Toggle (Light / Dark) */}
               <ThemeToggle />
 
@@ -594,7 +594,7 @@ export default function DashboardLayout({
           </header>
 
           {/* Page Content */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="flex-1 min-w-0 max-w-full p-3 sm:p-6 lg:p-8">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

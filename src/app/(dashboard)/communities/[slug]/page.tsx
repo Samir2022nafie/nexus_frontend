@@ -515,7 +515,7 @@ export default function CommunityOverviewPage() {
         <CardContent className="relative px-5 sm:px-6 pb-6 pt-0">
           {/* Avatar and Action Controls */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
-            <div className="relative size-24 sm:size-28 rounded-2xl ring-4 ring-background shadow-md border border-border bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+            <div className="relative size-24 sm:size-28 rounded-2xl ring-4 ring-background shadow-md border border-border bg-muted shrink-0 overflow-hidden flex items-center justify-center isolate">
               {profilePicUrl ? (
                 <CroppedImage
                   src={profilePicUrl}
