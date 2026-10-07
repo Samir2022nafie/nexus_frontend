@@ -617,9 +617,23 @@ export default function ProfilePage() {
       setLocationName(user.location?.place_name || user.location?.placeName || user.location?.name || "");
       setLocationLat(user.location?.latitude ?? null);
       setLocationLng(user.location?.longitude ?? null);
-      setIsLocationPrivate(Boolean(user.is_location_private));
+      setIsLocationPrivate(Boolean(user.is_location_private ?? user.isLocationPrivate));
     }
   }, [user, reset]);
+
+  // Compute if location fields have changed
+  const initialLocName = user?.location?.place_name || user?.location?.placeName || user?.location?.name || "";
+  const initialLocLat = user?.location?.latitude ?? null;
+  const initialLocLng = user?.location?.longitude ?? null;
+  const initialLocPrivate = Boolean(user?.is_location_private ?? user?.isLocationPrivate);
+
+  const isLocationDirty =
+    locationName !== initialLocName ||
+    locationLat !== initialLocLat ||
+    locationLng !== initialLocLng ||
+    isLocationPrivate !== initialLocPrivate;
+
+  const isFormDirty = isDirty || isLocationDirty;
 
   // 3. Update Profile Mutation
   const updateProfileMutation = useMutation({
@@ -629,20 +643,18 @@ export default function ProfilePage() {
         lastName?: string;
         bio?: string;
         profilePictureUrl?: string;
-        locationId?: string;
-        locationName?: string;
-        latitude?: number;
-        longitude?: number;
+        locationName?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
         isLocationPrivate?: boolean;
       } = {
         firstName: values.firstName?.trim() || undefined,
         lastName: values.lastName?.trim() || undefined,
         bio: values.bio?.trim() || undefined,
         profilePictureUrl: values.profilePictureUrl?.trim() || undefined,
-        locationId: user?.location?.id || (user as any)?.location_id || undefined,
-        locationName: locationName.trim() || undefined,
-        latitude: locationLat ?? undefined,
-        longitude: locationLng ?? undefined,
+        locationName: locationName.trim() ? locationName.trim() : null,
+        latitude: locationLat ?? null,
+        longitude: locationLng ?? null,
         isLocationPrivate: isLocationPrivate,
       };
       return apiPatch<UserProfileData>("/users/me", payload);
@@ -651,6 +663,13 @@ export default function ProfilePage() {
       toast.success("Profile updated successfully!");
       queryClient.setQueryData(["currentUserProfile"], updated);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      try {
+        const stored = localStorage.getItem("auth_user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          localStorage.setItem("auth_user", JSON.stringify({ ...parsed, ...updated }));
+        }
+      } catch {}
       reset({
         firstName: updated.first_name || "",
         lastName: updated.last_name || "",
@@ -660,7 +679,7 @@ export default function ProfilePage() {
       setLocationName(updated.location?.place_name || updated.location?.placeName || updated.location?.name || "");
       setLocationLat(updated.location?.latitude ?? null);
       setLocationLng(updated.location?.longitude ?? null);
-      setIsLocationPrivate(Boolean(updated.is_location_private));
+      setIsLocationPrivate(Boolean(updated.is_location_private ?? updated.isLocationPrivate));
     },
     onError: (err) => {
       if (isAxiosError(err)) {
@@ -1003,7 +1022,7 @@ export default function ProfilePage() {
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={updateProfileMutation.isPending || !isDirty}
+                    disabled={updateProfileMutation.isPending || !isFormDirty}
                     className="gap-2 cursor-pointer shadow-sm"
                   >
                     {updateProfileMutation.isPending ? (
