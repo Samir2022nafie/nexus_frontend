@@ -89,6 +89,7 @@ interface UserProfileData {
   } | null;
   location_id?: string | null;
   is_location_private?: boolean;
+  isLocationPrivate?: boolean;
 }
 
 function validatePhoneNumberInput(raw: string): { isValid: boolean; error?: string; formatted?: string } {
