@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { Providers } from "@/app/providers";
